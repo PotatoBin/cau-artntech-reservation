@@ -293,7 +293,7 @@ function isAvailableTime() {
   date.setHours(date.getHours() + 9);
   var hour = date.getUTCHours(); 
 
-  if (hour < 9 || hour >= 22) {
+  if (hour <= 9 || hour >= 22) {
       return true;
   } else {
       return false;
