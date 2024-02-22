@@ -75,7 +75,7 @@ async function reserve(reqBody, res, room_type) {
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다. ","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
- if (await checkOverlap(databaseId, start_time, end_time)) {
+ if (await checkOverlap(databaseId, start_time, end_time. room_type)) {
     description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
