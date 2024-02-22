@@ -80,6 +80,11 @@ async function reserve(reqBody, res, room_type) {
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
+  if (isAvailableTime()){
+    description = `9시부터 22시까지 당일 예약만 가능합니다.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다..","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
 
   const reserve_code = await generateReserveCode(room_type);
   const hiddenName = hideMiddleChar(client_info.name);
@@ -94,7 +99,7 @@ async function addToNotion(databaseId, room_type, time_string, reserve_code, hid
   await notion.pages.create({
       parent: { database_id: databaseId },
       properties: {
-        '방종류': {
+        '방 종류': {
           "type": "multi_select",
           "multi_select": [{ "name": room_type }]
         },
@@ -106,7 +111,7 @@ async function addToNotion(databaseId, room_type, time_string, reserve_code, hid
           "type": "rich_text",
           "rich_text": [{ "type": "text", "text": { "content": time_string } }]
         },
-        '예약번호': {
+        '예약 번호': {
           "type": "rich_text",
           "rich_text": [{ "type": "text", "text": { "content": reserve_code } }]
         }
@@ -283,6 +288,17 @@ function isWrongHours(start_time, end_time) {
   return diff > 240 || diff <= 0;
 }
 
+function isAvailableTime() {
+  var date = new Date();
+  date.setHours(date.getHours() + 9);
+  var hour = date.getUTCHours(); 
+
+  if (hour < 9 || hour >= 22) {
+      return true;
+  } else {
+      return false;
+  }
+}
 
 async function generateReserveCode(room_type){
   const room_codes = {
@@ -389,7 +405,7 @@ async function reserveCancel(reqBody, res){
       }
     });
 
-    description = `- 방 종류 : ${room_type}\n- 예약번호 : ${reserve_code}\n- 대여 시간 : ${time_string} - ${duration.slice(0, -3)} \n- 신청자 : ${hiddenName}`;
+    description = `- 방 종류 : ${room_type}\n- 예약번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
     return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "연습실 대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   } else {
 
