@@ -192,12 +192,12 @@ async function reserveStartTimeCheck (reqBody, res) {
   var intervalInMinutes = getTimeInterval(currentTime, startTime);
 
   if (intervalInMinutes < -30) {
-    console.log(`[FAILED] Not available for 30 min ago : ${start_time}`);
+    console.log(`[FAILED] Not available for 30 min ago : ${startTime}`);
     res.send({"status": "FAIL"});
     return;
   }
   else {
-    console.log(`[SUCCESS] Successfully Validated : ${start_time}`);
+    console.log(`[SUCCESS] Successfully Validated : ${startTime}`);
     res.send({"status": "SUCCESS"});
     return;
   }
