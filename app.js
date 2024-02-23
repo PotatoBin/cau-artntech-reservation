@@ -246,7 +246,7 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
     filter: {
       and: [
         {
-          property: "신청 일시",
+          timestamp: "신청 일시",
           created_time: {
             equals: today,
           },
