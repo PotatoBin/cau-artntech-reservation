@@ -1,4 +1,5 @@
 const { Client } = require("@notionhq/client");
+require("dotenv").config();
 const notion = new Client({ auth: process.env.NOTION_API_TOKEN });
 const morgan = require('morgan');
 const express = require('express');
