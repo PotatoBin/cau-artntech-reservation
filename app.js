@@ -138,9 +138,9 @@ async function addToNotion(databaseId, room_type, time_string, reserve_code, hid
           "type": "rich_text",
           "rich_text": [{ "type": "text", "text": { "content": time_string } }]
         },
-        '신청자 이름': {
-          "type": "rich_text",
-          "rich_text": [{ "type": "text", "text": { "content": client_info.name } }]
+        '신청자 이름':{
+          "type": "title",
+          "title": [{ "type": "text", "text": { "content": client_info.name } }]
         },
         '신청자 학번': {
           "type": "rich_text",
