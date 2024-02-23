@@ -90,7 +90,7 @@ async function reserve(reqBody, res, room_type) {
   const hiddenName = hideMiddleChar(client_info.name);
 
   await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
-  description = `- 방 종류 : ${room_type}\n- 예약번호 : ${reserve_code}\n- 대여 시간 : ${time_string} - ${duration.slice(0, -3)} \n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n`;
+  description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string} - ${duration.slice(0, -3)} \n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n`;
   res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": title,"description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   return;
 }
@@ -405,7 +405,7 @@ async function reserveCancel(reqBody, res){
       }
     });
 
-    description = `- 방 종류 : ${room_type}\n- 예약번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
+    description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
     return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "연습실 대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   } else {
 
