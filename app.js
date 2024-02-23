@@ -266,7 +266,7 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
   else {
     for (let i = 0; i < existingReservations.results.length; i++) {
       let reservation = existingReservations.results[i];
-      let time = reservation.properties['대여시간'].rich_text[0].plain_text;
+      let time = reservation.properties['대여 시간'].rich_text[0].plain_text;
       let partedTime = time.split('-');
       let reservationStart = timeStringToArray(partedTime[0]);
       let reservationEnd  = timeStringToArray(partedTime[1]);
