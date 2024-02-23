@@ -72,18 +72,18 @@ async function reserve(reqBody, res, room_type) {
   }
 
   if (isWrongHours(start_time, end_time)){
-    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n처음부터 다시 시도해주세요.`;
+    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다. ","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
  if (await checkOverlap(databaseId, start_time, end_time, room_type)) {
-    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
+    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
   if (isAvailableTime()){
     description = `9시부터 22시까지 당일 예약만 가능합니다.`;
-    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다..","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
 
@@ -91,8 +91,8 @@ async function reserve(reqBody, res, room_type) {
   const hiddenName = hideMiddleChar(client_info.name);
 
   await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
-  description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n`;
-  res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": title,"description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+  description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n사용 후 정리 및 청소를 해주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
+  res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   return;
 }
 
