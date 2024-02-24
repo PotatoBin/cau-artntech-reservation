@@ -154,7 +154,7 @@ async function addToNotion(databaseId, room_type, time_string, reserve_code, hid
           "type": "rich_text",
           "rich_text": [{ "type": "text", "text": { "content": total_number } }]
         },
-        'kakao_id': {
+        'kakao id': {
           "type": "rich_text",
           "rich_text": [{ "type": "text", "text": { "content": kakao_id } }]
         }
@@ -271,13 +271,16 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
       let reservationStart = timeStringToArray(partedTime[0]);
       let reservationEnd  = timeStringToArray(partedTime[1]);
 
-      if ((getTimeInterval(start_time, reservationStart) <= 0 && getTimeInterval(start_time, reservationEnd) > 0) || 
-          (getTimeInterval(end_time, reservationStart) < 0 && getTimeInterval(end_time, reservationEnd) >= 0)) {
+      let startTime = timeStringToArray(start_time.slice(0, 5));
+      let endTime = timeStringToArray(end_time.slice(0, 5));
+      
+      if ((getTimeInterval(startTime, reservationStart) <= 0 && getTimeInterval(startTime, reservationEnd) > 0) || 
+          (getTimeInterval(endTime, reservationStart) < 0 && getTimeInterval(endTime, reservationEnd) >= 0)) {
         return true;
       }
     }
+    return false;
   }
-  return false;
 }
 
 
@@ -383,8 +386,9 @@ async function reserveCancel(reqBody, res){
       description = `다시 시도해주세요.`;
       return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "이미 취소된 예약입니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     }
+    const room_type = response.results[0].properties["방 종류"].multi_select[0].name;
     const time_string = response.results[0].properties["대여 시간"].rich_text[0].plain_text;
-    const hiddenName = response.results[0].properties["신청자"].rich_text[0].plain_text;
+    const hiddenName = response.results[0].properties["신청자"].title[0].plain_text;
     
     await notion.pages.update({
       page_id: response.results[0].id,
