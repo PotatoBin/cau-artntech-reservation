@@ -188,7 +188,7 @@ function getTimeInterval(timeArray1, timeArray2) {
 }
 
 async function reserveStartTimeCheck (reqBody, res) {
-  var startTime = timeStringToArray(reqBody.value.origin);
+  var startTime = timeStringToArray(reqBody.value.origin.slice(0, 5));
   var currentTime = getCurrentTime;
   var intervalInMinutes = getTimeInterval(currentTime, startTime);
 
@@ -273,7 +273,7 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
 
       let startTime = timeStringToArray(start_time.slice(0, 5));
       let endTime = timeStringToArray(end_time.slice(0, 5));
-      
+
       if ((getTimeInterval(startTime, reservationStart) <= 0 && getTimeInterval(startTime, reservationEnd) > 0) || 
           (getTimeInterval(endTime, reservationStart) < 0 && getTimeInterval(endTime, reservationEnd) >= 0)) {
         return true;
