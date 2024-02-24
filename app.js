@@ -175,8 +175,8 @@ function timeStringToArray(timeString) {
 function getCurrentTime() {
   var now = new Date();
   now.setHours(now.getUTCHours() + 9);
-  var hours = now.getUTCHours();
-  var minutes = now.getUTCMinutes();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
   return [hours, minutes];
 }
 
