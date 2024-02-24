@@ -189,7 +189,7 @@ function getTimeInterval(timeArray1, timeArray2) {
 
 async function reserveStartTimeCheck (reqBody, res) {
   var startTime = timeStringToArray(reqBody.value.origin.slice(0, 5));
-  var currentTime = getCurrentTime;
+  var currentTime = getCurrentTime();
   var intervalInMinutes = getTimeInterval(currentTime, startTime);
 
   if (intervalInMinutes < -30) {
