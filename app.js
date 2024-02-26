@@ -72,8 +72,8 @@ async function reserve(reqBody, res, room_type) {
   }
 
   if (isWrongHours(start_time, end_time)){
-    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요.`;
-    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다. ","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요. 종료 시각이 시작 시각 이전으로 작성되었는지 확인해주세요.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
  if (await checkOverlap(databaseId, start_time, end_time, room_type)) {
@@ -367,11 +367,10 @@ async function reserveCancel(reqBody, res){
   if (logResponse.results.length === 0) {
     console.log(`[FAILED] Reservation code that does not exist : ${reserve_code}`);
     description = `다시 시도해주세요.`;
-    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "예약번호와 일치하는 예약이 없습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "예약번호와 일치하는 예약이 없습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   }
 
   if (logResponse.results[0].properties["kakao id"].rich_text[0].plain_text === kakao_id){
-
     const response = await notion.databases.query({
       database_id: databaseId,
       filter: {
@@ -410,7 +409,7 @@ async function reserveCancel(reqBody, res){
     });
 
     description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
-    return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "연습실 대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "공간 대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   } else {
 
     console.log(`[FAILED] Reservation by another person : ${reserve_code}`);
