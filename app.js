@@ -82,7 +82,7 @@ async function reserve(reqBody, res, room_type) {
     return;
   }
   if (isAvailableTime()){
-    description = `9시부터 22시까지 당일 예약만 가능합니다.`;
+    description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
@@ -293,10 +293,11 @@ function isWrongHours(start_time, end_time) {
 
 function isAvailableTime() {
   var date = new Date();
-  date.setHours(date.getHours() + 9);
+  date.setHours(date.getHours() + 9); 
   var hour = date.getUTCHours(); 
+  var day = date.getUTCDay();
 
-  if (hour <= 9 || hour >= 22) {
+  if (hour <= 9 || hour >= 22 || day === 0 || day === 6) {
       return true;
   } else {
       return false;
