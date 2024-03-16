@@ -109,8 +109,11 @@ async function reserveCharger(reqBody, res, type){
   const time_string = `${start_time.slice(0, 5)} - ${end_time.slice(0, 5)}`;
 
   const databaseId = process.env.NOTION_DATABASE_CHARGER_ID;
-  if
-
+  if (isNotPayer(client_info.name, client_info.id)){
+    description = `2024학년도 1학기 예술공학대학 학생회비 납부자가 아닙니다. 정보를 제대로 입력하였는지 확인해주시고, 학생회 채널로 문의 바랍니다.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "학생회비 납부자가 아닙니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
 
   if (isAvailableTime()){
     description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
@@ -344,7 +347,7 @@ function isAvailableTime() {
 }
 
 function isNotPayer(name, id){
-
+  return false;
 }
 
 async function generateReserveCode(room_type){
