@@ -11,10 +11,39 @@ app.use(express.urlencoded( {extended : false } ));
 app.use(morgan('combined'));
 app.use('/reserve', router);
 
-router.post('/:type', async (req, res) => {
-  const { type } = req.params;
-  await reserve(req.body, res, type);
-});
+router.post('/01BLUE', async (req, res) => {
+  await reserve(req.body, res, '01BLUE');
+  });
+  
+router.post('/02GRAY', async (req, res) => {
+  await reserve(req.body, res, '02GRAY');
+  });
+  
+router.post('/03SILVER', async (req, res) => {
+  await reserve(req.body, res, '03SILVER');
+  });
+  
+router.post('/04GOLD', async (req, res) => {
+  await reserve(req.body, res, '04GOLD');
+  });
+  
+router.post('/GLAB1', async (req, res) => {
+  await reserve(req.body, res, 'GLAB1');
+  });
+  
+router.post('/GLAB2', async (req, res) => {
+  await reserve(req.body, res, 'GLAB2');
+  });
+
+router.post('/CHARGER01', async (req, res) => {
+  await reserveCharger(req.body, res, 'CHARGER01');
+  });
+router.post('/CHARGER02', async (req, res) => {
+  await reserveCharger(req.body, res, 'CHARGER02');
+  });
+router.post('/CHARGER03', async (req, res) => {
+  await reserveCharger(req.body, res, 'CHARGER03');
+  });
 
 router.post('/check/start_time', async (req, res) => {
   await reserveStartTimeCheck(req.body, res);
@@ -41,15 +70,47 @@ async function reserve(reqBody, res, room_type) {
   const time_string = `${start_time.slice(0, 5)} - ${end_time.slice(0, 5)}`;
 
   let databaseId;
-  let title;
   const NewMediaLibrary = ['01BLUE','02GRAY','03SILVER','04GOLD'];
   const GLAB = ['GLAB1','GLAB2'];
-  const Chargers = ['Charge01'];
   if (NewMediaLibrary.includes(room_type)) {
       databaseId = process.env.NOTION_DATABASE_NML_ID;
   } else if (GLAB.includes(room_type)) {
       databaseId = process.env.NOTION_DATABASE_GLAB_ID;
   }
+
+  if (isAvailableTime()){
+    description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
+  if (isWrongHours(start_time, end_time)){
+    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요. 종료 시각이 시작 시각 이전으로 작성되었는지 확인해주세요.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
+ if (await checkOverlap(databaseId, start_time, end_time, room_type)) {
+    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
+  const reserve_code = await generateReserveCode(room_type);
+  const hiddenName = hideMiddleChar(client_info.name);
+  description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n사용 후 정리 및 청소를 해주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
+  res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+  return await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
+}
+
+async function reserveCharger(reqBody, res, type){
+  const start_time = JSON.parse(reqBody.action.params.start_time).value;
+  const end_time = JSON.parse(reqBody.action.params.end_time).value;
+  const client_info = parseClientInfo(reqBody.action.params.client_info);
+  const total_number = reqBody.action.params.total_number;
+  const kakao_id = reqBody.userRequest.user.id;
+  const time_string = `${start_time.slice(0, 5)} - ${end_time.slice(0, 5)}`;
+
+  const databaseId = process.env.NOTION_DATABASE_CHARGER_ID;
+  if
+
 
   if (isAvailableTime()){
     description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
@@ -263,7 +324,6 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
   }
 }
 
-
 function isWrongHours(start_time, end_time) {
   let start = timeStringToArray(start_time);
   let end = timeStringToArray(end_time);
@@ -283,6 +343,10 @@ function isAvailableTime() {
   }
 }
 
+function isNotPayer(name, id){
+
+}
+
 async function generateReserveCode(room_type){
   const room_codes = {
     '01BLUE': 100000,
@@ -290,7 +354,8 @@ async function generateReserveCode(room_type){
     '03SILVER': 300000,
     '04GOLD': 400000,
     'GLAB1': 500000,
-    'GLAB2': 600000
+    'GLAB2': 600000,
+    'CHARGER': 700000
   }
   let reserve_code = room_codes[room_type] + Math.floor(Math.random() * 90000) + 10000;
   let str_code = reserve_code.toString();
