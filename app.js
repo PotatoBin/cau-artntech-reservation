@@ -11,28 +11,9 @@ app.use(express.urlencoded( {extended : false } ));
 app.use(morgan('combined'));
 app.use('/reserve', router);
 
-router.post('/01BLUE', async (req, res) => {
-  await reserve(req.body, res, '01BLUE');
-});
-
-router.post('/02GRAY', async (req, res) => {
-  await reserve(req.body, res, '02GRAY');
-});
-
-router.post('/03SILVER', async (req, res) => {
-  await reserve(req.body, res, '03SILVER');
-});
-
-router.post('/04GOLD', async (req, res) => {
-  await reserve(req.body, res, '04GOLD');
-});
-
-router.post('/GLAB1', async (req, res) => {
-  await reserve(req.body, res, 'GLAB1');
-});
-
-router.post('/GLAB2', async (req, res) => {
-  await reserve(req.body, res, 'GLAB2');
+router.post('/:type', async (req, res) => {
+  const { type } = req.params;
+  await reserve(req.body, res, type);
 });
 
 router.post('/check/start_time', async (req, res) => {
@@ -63,14 +44,18 @@ async function reserve(reqBody, res, room_type) {
   let title;
   const NewMediaLibrary = ['01BLUE','02GRAY','03SILVER','04GOLD'];
   const GLAB = ['GLAB1','GLAB2'];
-
+  const Chargers = ['Charge01'];
   if (NewMediaLibrary.includes(room_type)) {
       databaseId = process.env.NOTION_DATABASE_NML_ID;
-
   } else if (GLAB.includes(room_type)) {
       databaseId = process.env.NOTION_DATABASE_GLAB_ID;
   }
 
+  if (isAvailableTime()){
+    description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
+    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    return;
+  }
   if (isWrongHours(start_time, end_time)){
     description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요. 종료 시각이 시작 시각 이전으로 작성되었는지 확인해주세요.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
@@ -81,19 +66,11 @@ async function reserve(reqBody, res, room_type) {
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
-  if (isAvailableTime()){
-    description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
-    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-    return;
-  }
-
   const reserve_code = await generateReserveCode(room_type);
   const hiddenName = hideMiddleChar(client_info.name);
-
-  await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
   description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n사용 후 정리 및 청소를 해주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
   res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-  return;
+  return await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
 }
 
 async function addToNotion(databaseId, room_type, time_string, reserve_code, hiddenName, client_info, total_number, kakao_id) {
@@ -238,9 +215,8 @@ function hideMiddleChar(str) {
 
 async function checkOverlap(databaseId, start_time, end_time, room_type) {
   var now = new Date();
-  now.setHours(now.getUTCHours() + 9);
+  now.setHours(now.getHours() + 9);
   var today = now.toISOString().split("T")[0];
-
   const existingReservations = await notion.databases.query({
     database_id: databaseId,
     filter: {
@@ -273,9 +249,13 @@ async function checkOverlap(databaseId, start_time, end_time, room_type) {
 
       let startTime = timeStringToArray(start_time.slice(0, 5));
       let endTime = timeStringToArray(end_time.slice(0, 5));
-
-      if ((getTimeInterval(startTime, reservationStart) <= 0 && getTimeInterval(startTime, reservationEnd) > 0) || 
-          (getTimeInterval(endTime, reservationStart) < 0 && getTimeInterval(endTime, reservationEnd) >= 0)) {
+      if (getTimeInterval(startTime,reservationStart) <= 0 && getTimeInterval(startTime, reservationEnd) > 0) {
+        return true;
+      }
+      else if (getTimeInterval(endTime, reservationStart) < 0 && getTimeInterval(endTime, reservationEnd) >= 0) {
+        return true;
+      }
+      else if (getTimeInterval(startTime, reservationStart) >= 0 && getTimeInterval(endTime, reservationEnd) <= 0) {
         return true;
       }
     }
@@ -296,8 +276,7 @@ function isAvailableTime() {
   date.setHours(date.getHours() + 9); 
   var hour = date.getUTCHours(); 
   var day = date.getUTCDay();
-
-  if (hour <= 9 || hour >= 22 || day === 0 || day === 6) {
+  if (hour <= 8 || hour >= 22 || day === 0 || day === 6) {
       return true;
   } else {
       return false;
