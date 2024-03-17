@@ -36,13 +36,13 @@ router.post('/GLAB2', async (req, res) => {
   });
 
 router.post('/CHARGER01', async (req, res) => {
-  await reserveCharger(req.body, res, 'CHARGER01');
+  await reserveCharger(req.body, res, '노트북 충전기 (C-Type 65W)');
   });
 router.post('/CHARGER02', async (req, res) => {
-  await reserveCharger(req.body, res, 'CHARGER02');
+  await reserveCharger(req.body, res, '스마트폰 충전기 (C-Type)');
   });
 router.post('/CHARGER03', async (req, res) => {
-  await reserveCharger(req.body, res, 'CHARGER03');
+  await reserveCharger(req.body, res, '아이폰 충전기 (8pin)');
   });
 
 router.post('/check/start_time', async (req, res) => {
@@ -104,7 +104,6 @@ async function reserveCharger(reqBody, res, type){
   const start_time = JSON.parse(reqBody.action.params.start_time).value;
   const end_time = JSON.parse(reqBody.action.params.end_time).value;
   const client_info = parseClientInfo(reqBody.action.params.client_info);
-  const total_number = reqBody.action.params.total_number;
   const kakao_id = reqBody.userRequest.user.id;
   const time_string = `${start_time.slice(0, 5)} - ${end_time.slice(0, 5)}`;
 
@@ -114,27 +113,36 @@ async function reserveCharger(reqBody, res, type){
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "학생회비 납부자가 아닙니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
-
   if (isAvailableTime()){
     description = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "현재 예약할 수 없는 시간입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
   if (isWrongHours(start_time, end_time)){
-    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요. 종료 시각이 시작 시각 이전으로 작성되었는지 확인해주세요.`;
+    description = `- 충전기 종류 : ${type}\n- 신청한 시간 : ${time_string}\n\n처음부터 다시 시도해주세요. 종료 시각이 시작 시각 이전으로 작성되었는지 확인해주세요.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "30분부터 최대 4시간까지 신청 가능합니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
   }
- if (await checkOverlap(databaseId, start_time, end_time, room_type)) {
-    description = `- 방 종류 : ${room_type}\n- 신청한 시간 : ${time_string}\n\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
-    res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "해당 일시에 겹치는 예약이 있습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-    return;
+ if (await checkOverlap(databaseId, start_time, end_time, `${type} 1`)) {
+    if (await checkOverlap(databaseId, start_time, end_time, `${type} 2`)){
+      description = `- 충전기 종류 : ${type}\n- 신청한 시간 : ${time_string}\n\n예약 현황을 조회하시고, 비어있는 시간에 다시 신청해주세요.`;
+      res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "모든 충전기가 사용중입니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+      return;
+    } else {
+      const reserve_code = await generateReserveCode('CHARGER');
+      const hiddenName = hideMiddleChar(client_info.name);
+      const locker_password = await getLockertPassword(`${type} 2`);
+      description = `- 충전기 종류 : ${type} 2\n- 사물함 비밀번호 : ${locker_password}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n\n사용 후 제 자리에 돌려놔주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
+      res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+      return await addToNotion(databaseId, type, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
+    }
   }
-  const reserve_code = await generateReserveCode(room_type);
+  const reserve_code = await generateReserveCode('CHARGER');
   const hiddenName = hideMiddleChar(client_info.name);
-  description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n- 총 인원 : ${total_number} \n\n사용 후 정리 및 청소를 해주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
+  const locker_password = await getLockertPassword(`${type} 1`);
+  description = `- 충전기 종류 : ${type} 1\n- 사물함 비밀번호 : ${locker_password}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n\n사용 후 제 자리에 돌려놔주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
   res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-  return await addToNotion(databaseId, room_type, time_string ,reserve_code, hiddenName, client_info, total_number, kakao_id);
+  return await addToNotion(databaseId, type, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
 }
 
 async function addToNotion(databaseId, room_type, time_string, reserve_code, hiddenName, client_info, total_number, kakao_id) {
@@ -350,6 +358,19 @@ function isNotPayer(name, id){
   return false;
 }
 
+async function getLockertPassword(type){
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_DATABASE_LOCKER_ID,
+    filter: {
+      property: "충전기",
+      rich_text: {
+        equals: type,
+      },
+    },
+  });
+  return response.results[0].properties["비밀번호"].multi_select[0].name;
+}
+
 async function generateReserveCode(room_type){
   const room_codes = {
     '01BLUE': 100000,
@@ -390,6 +411,8 @@ async function reserveCancel(reqBody, res){
     databaseId = process.env.NOTION_DATABASE_NML_ID;;
   } else if (['5', '6'].includes(reserve_code[0])) {
     databaseId = process.env.NOTION_DATABASE_GLAB_ID;
+  } else if (['7'].includes(reserve_code[0])) {
+    databaseId = process.env.NOTION_DATABASE_CHARGER_ID;
   }
 
   const logResponse = await notion.databases.query({
