@@ -343,6 +343,7 @@ function isWrongHours(start_time, end_time) {
 }
 
 function isAvailableTime() {
+  return false;
   var date = new Date();
   date.setHours(date.getHours() + 9); 
   var hour = date.getUTCHours(); 
