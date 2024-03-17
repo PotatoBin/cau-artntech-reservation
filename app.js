@@ -134,7 +134,7 @@ async function reserveCharger(reqBody, res, type){
       const locker_password = await getLockertPassword(`${type} 2`);
       description = `- 충전기 종류 : ${type} 2\n- 사물함 비밀번호 : ${locker_password}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n\n사용 후 제 자리에 돌려놔주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
       res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-      return await addToNotion(databaseId, type, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
+      return await addToNotion(databaseId, `${type} 2`, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
     }
   }
   const reserve_code = await generateReserveCode('CHARGER');
@@ -142,7 +142,7 @@ async function reserveCharger(reqBody, res, type){
   const locker_password = await getLockertPassword(`${type} 1`);
   description = `- 충전기 종류 : ${type} 1\n- 사물함 비밀번호 : ${locker_password}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}\n\n사용 후 제 자리에 돌려놔주시길 바랍니다. 안내 및 준수 사항 미확인으로 생기는 문제는 책임지지 않으며, 추후 대여가 제한될 수 있습니다.`;
   res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "성공적으로 대여하였습니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
-  return await addToNotion(databaseId, type, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
+  return await addToNotion(databaseId, `${type} 1`, time_string ,reserve_code, hiddenName, client_info, '-', kakao_id);
 }
 
 async function addToNotion(databaseId, room_type, time_string, reserve_code, hiddenName, client_info, total_number, kakao_id) {
