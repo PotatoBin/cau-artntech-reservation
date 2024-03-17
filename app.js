@@ -369,7 +369,7 @@ async function getLockertPassword(type){
       },
     },
   });
-  return response.results[0].properties["비밀번호"].multi_select[0].name;
+  return response.results[0].properties["비밀번호"].rich_text[0].plain_text;
 }
 
 async function generateReserveCode(room_type){
