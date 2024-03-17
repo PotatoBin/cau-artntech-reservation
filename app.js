@@ -492,7 +492,7 @@ async function reserveCancel(reqBody, res){
 
 async function reserveCodeCheck (reqBody, res) {
   const reserve_code = reqBody.value.origin;
-  if (['1', '2', '3', '4', '5', '6'].includes(reserve_code[0]) && reserve_code.length === 6 && !isNaN(reserve_code)) {
+  if (['1', '2', '3', '4', '5', '6', '7'].includes(reserve_code[0]) && reserve_code.length === 6 && !isNaN(reserve_code)) {
     console.log(`[SUCCESS] Successfully Validated : ${reserve_code}`);
     return res.send({"status": "SUCCESS" });
   }
