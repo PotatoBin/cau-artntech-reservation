@@ -355,8 +355,20 @@ function isAvailableTime() {
   }
 }
 
-function isNotPayer(name, id){
-  return false;
+async function isNotPayer(name, id){
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_DATABASE_PAYER_ID,
+    filter: {
+      property: "학번",
+      rich_text: {
+        equals: id,
+      },
+    },
+  });
+  if (response.results.length === 0) {
+    return true;
+  }
+
 }
 
 async function getLockertPassword(type){
@@ -480,8 +492,8 @@ async function reserveCancel(reqBody, res){
       }
     });
 
-    description = `- 방 종류 : ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
-    return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "공간 대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
+    description = `- ${room_type}\n- 예약 번호 : ${reserve_code}\n- 대여 시간 : ${time_string}\n- 신청자 : ${hiddenName}`;
+    return res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "대여를 취소했습니다","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
   } else {
 
     console.log(`[FAILED] Reservation by another person : ${reserve_code}`);
