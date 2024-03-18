@@ -343,7 +343,6 @@ function isWrongHours(start_time, end_time) {
 }
 
 function isAvailableTime() {
-  return false;
   var date = new Date();
   date.setHours(date.getHours() + 9); 
   var hour = date.getUTCHours(); 
@@ -368,7 +367,11 @@ async function isNotPayer(name, id){
   if (response.results.length === 0) {
     return true;
   }
-
+  if (response.results[0].properties["이름"].title[0].plain_text == name){
+    return false;
+  } else {
+    return true;
+  }
 }
 
 async function getLockertPassword(type){
