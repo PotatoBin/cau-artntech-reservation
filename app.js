@@ -364,8 +364,8 @@ async function isNotPayer(name, id){
       },
     },
   });
-  
-  if (response.results[0].properties["이름"].title[0].plain_text == name){
+  console.log(response.results[0].properties["이름"].title[0].plain_text);
+  if (response.results[0].properties["이름"].title[0].plain_text === name){
     return false;
   } else {
     return true;
