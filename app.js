@@ -364,8 +364,8 @@ async function isNotPayer(name, id){
       },
     },
   });
-  console.log(response.results[0].properties["이름"].title[0].plain_text);
   if (response.results[0].properties["이름"].title[0].plain_text === name){
+    console.log("학생회비 납부자 맞다")
     return false;
   } else {
     return true;
