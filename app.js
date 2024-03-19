@@ -108,7 +108,7 @@ async function reserveCharger(reqBody, res, type){
   const time_string = `${start_time.slice(0, 5)} - ${end_time.slice(0, 5)}`;
 
   const databaseId = process.env.NOTION_DATABASE_CHARGER_ID;
-  if (isNotPayer(client_info.name, client_info.id)){
+  if (await isNotPayer(client_info.name, client_info.id)){
     description = `- 이름 : ${client_info.name}\n- 학번 : ${client_info.id}\n2024학년도 1학기 예술공학대학 학생회비 납부자가 아닙니다. 정보를 제대로 입력하였는지 확인해주시고, 학생회 채널로 문의 바랍니다.`;
     res.send({"version": "2.0","template": {"outputs": [{ "textCard": {"title": "학생회비 납부자가 아닙니다.","description": description,"buttons": [{ "label": "처음으로","action": "block","messageText": "처음으로"}]}}]}});
     return;
@@ -365,7 +365,6 @@ async function isNotPayer(name, id){
     },
   });
   if (response.results[0].properties["이름"].title[0].plain_text === name){
-    console.log("학생회비 납부자 맞다")
     return false;
   } else {
     return true;
