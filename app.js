@@ -609,28 +609,49 @@ async function checkOverlap(table, userDate, userStart, userEnd, itemType){
 /***********************************************
  * (F) DB Insert
  ***********************************************/
-async function addToDatabase(table, code, rtype, rdate, stime, etime, masked, info, kakao_id){
+async function addToDatabase(
+  table, code, room_type, dateString, startTimeStr, endTimeStr, maskedName, clientInfo, kakao_id
+) {
   console.log("[INFO] addToDatabase->", table, code);
-  const conn=await pool.getConnection();
+  const conn = await pool.getConnection();
   try {
-    // reserve_date (DATE), start_time/end_time (TIME)
-    const q=`INSERT INTO ${table} (reserve_code, room_type, reserve_date, start_time, end_time, masked_name)
-             VALUES(?,?,?,?,?,?)`;
-    console.log("[DEBUG] space insert->", q);
-    await conn.execute(q, [code, rtype, rdate, stime, etime, masked]);
+    // 예: dateString="2025-02-05", startTimeStr="15:00:00", endTimeStr="17:00:00"
+    console.log("Arguments:", [
+      code, room_type, dateString, startTimeStr, endTimeStr, maskedName
+    ]);
+
+    const q = `
+      INSERT INTO ${table} (reserve_code, room_type, reserve_date, start_time, end_time, masked_name)
+      VALUES (?,?,?,?,?,?)
+    `;
+    await conn.execute(q, [
+      code, room_type,
+      dateString,        // "YYYY-MM-DD"
+      startTimeStr,      // "HH:MM:SS"
+      endTimeStr,        // "HH:MM:SS"
+      maskedName
+    ]);
 
     // logs 테이블
-    const logQ=`
+    const logQ = `
       INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
-      VALUES(?,?,?,?,?,?,?)
+      VALUES (?,?,?,?,?,?,?)
     `;
-    console.log("[DEBUG] logs insert->", logQ);
-    await conn.execute(logQ, [code, rtype, 'reserve', info.name, info.id, info.phone, kakao_id]);
+    await conn.execute(logQ, [
+      code,
+      room_type,
+      'reserve',
+      clientInfo.name,
+      clientInfo.id,
+      clientInfo.phone,
+      kakao_id
+    ]);
 
   } finally {
     conn.release();
   }
 }
+
 
 /***********************************************
  * (G) 코드 생성: 가장 최근 코드 +1
