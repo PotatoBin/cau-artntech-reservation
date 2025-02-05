@@ -574,38 +574,31 @@ async function reserveCodeCheck(reqBody, res){
  * (E) 중복 체크 (당일만)
  ***********************************************/
 
-async function checkOverlap(table, userStart, userEnd, itemType) {
+async function checkOverlap(table, userDate, userStart, userEnd, itemType){
   console.log("[INFO] checkOverlap->", table, itemType);
-  
-  const conn = await pool.getConnection();
+  const conn=await pool.getConnection();
   try {
-    // 테이블에 따라 type 컬럼 명이 다름
-    // charger면 'charger_type', 아니면 'room_type'
-    const typeColumn = (table === 'charger') ? 'charger_type' : 'room_type';
+    // table별 type column
+    let colType= (table==='charger') ? 'charger_type' : 'room_type';
 
-    // 부분 겹침 판정:
-    // (start_time < userEnd) AND (end_time > userStart)
-    // 동시에 DATE(created_at)=CURDATE() 로 "오늘 예약"만 검사
-    const query = `
+    // 부분 겹침: (start_time < userEnd) AND (end_time > userStart)
+    // 날짜: (reserve_date = userDate)
+    const q=`
       SELECT *
       FROM ${table}
       WHERE
-        DATE(created_at) = CURDATE()
-        AND ${typeColumn} = ?
+        reserve_date=?
+        AND ${colType}=?
         AND start_time < ?
         AND end_time > ?
     `;
-    console.log("[DEBUG] overlap query->", query);
-
-    // 파라미터 순서: [방or충전기이름, userEnd, userStart]
-    const [rows] = await conn.execute(query, [itemType, userEnd, userStart]);
-
+    console.log("[DEBUG] overlap query->", q);
+    const [rows] = await conn.execute(q, [userDate, itemType, userEnd, userStart]);
     console.log("[DEBUG] overlap count->", rows.length);
-    return (rows.length > 0); // 1건이라도 있으면 true(겹침)
-
-  } catch (e) {
-    console.error("[ERROR] checkOverlap:", e);
-    return false; // 에러 시 그냥 false 리턴 or throw
+    return (rows.length>0);
+  } catch(err){
+    console.error("[ERROR] checkOverlap:",err);
+    return false;
   } finally {
     conn.release();
   }
@@ -616,20 +609,24 @@ async function checkOverlap(table, userStart, userEnd, itemType) {
 /***********************************************
  * (F) DB Insert
  ***********************************************/
-async function addToDatabase(table, code, rtype, startdb, enddb, masked, info, kid){
+async function addToDatabase(table, code, rtype, rdate, stime, etime, masked, info, kakao_id){
   console.log("[INFO] addToDatabase->", table, code);
   const conn=await pool.getConnection();
   try {
-    const q=`INSERT INTO ${table} (reserve_code, room_type, start_time, end_time, masked_name) VALUES (?,?,?,?,?)`;
+    // reserve_date (DATE), start_time/end_time (TIME)
+    const q=`INSERT INTO ${table} (reserve_code, room_type, reserve_date, start_time, end_time, masked_name)
+             VALUES(?,?,?,?,?,?)`;
     console.log("[DEBUG] space insert->", q);
-    await conn.execute(q,[code,rtype,startdb,enddb,masked]);
+    await conn.execute(q, [code, rtype, rdate, stime, etime, masked]);
 
+    // logs 테이블
     const logQ=`
       INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
       VALUES(?,?,?,?,?,?,?)
     `;
     console.log("[DEBUG] logs insert->", logQ);
-    await conn.execute(logQ,[code,rtype,'reserve',info.name,info.id,info.phone,kid]);
+    await conn.execute(logQ, [code, rtype, 'reserve', info.name, info.id, info.phone, kakao_id]);
+
   } finally {
     conn.release();
   }
