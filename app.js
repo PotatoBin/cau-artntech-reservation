@@ -111,241 +111,195 @@ function isAvailableTime() {
 /***********************************************
  * (A) 방/GLAB 예약
  ***********************************************/
-async function reserve(reqBody, res, room_type) {
+async function reserve(reqBody, res, room_type){
   console.log("[INFO] reserve() ->", room_type);
   try {
-    const start_time_str = JSON.parse(reqBody.action.params.start_time).value; // 예: "15:00"
-    const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;   // 예: "17:00"
+    const start_time_str = JSON.parse(reqBody.action.params.start_time).value; // 예 "16:30"
+    const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;   // 예 "18:30"
     const client_info    = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id       = reqBody.userRequest.user.id;
-
+    
+    // 날짜: "YYYY-MM-DD"
     const now = new Date();
-    const todayDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const start_db  = `${todayDate} ${start_time_str}:00`; // DB에 "HH:MM:SS"
-    const end_db    = `${todayDate} ${end_time_str}:00`;
+    const dateStr = now.toISOString().split('T')[0];  // e.g. "2025-02-05"
+
+    // TIME: "HH:MM:SS"
+    const start_db = `${start_time_str}:00`;  // "16:30:00"
+    const end_db   = `${end_time_str}:00`;    // "18:30:00"
+
     const displayTime = `${start_time_str} - ${end_time_str}`;
 
+    // 어떤 테이블인지
     let table;
-    if (['01BLUE','02GRAY','03SILVER','04GOLD'].includes(room_type)) {
-      table = 'new_media_library';
-    } else if (['GLAB1','GLAB2'].includes(room_type)) {
-      table = 'glab';
-    } else {
+    if(['01BLUE','02GRAY','03SILVER','04GOLD'].includes(room_type)) table='new_media_library';
+    else if(['GLAB1','GLAB2'].includes(room_type)) table='glab';
+    else {
       console.log("[FAIL] Invalid room_type->", room_type);
-      return res.send({ status:"FAIL", message:"잘못된 방 유형" });
+      return res.send({status:"FAIL", message:"잘못된 방 유형"});
     }
 
-    if (!isAvailableTime()) {
-      console.log("[WARN] Not available time");
+    // 시간 체크
+    if(!isAvailableTime()){
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"현재 예약할 수 없는 시간입니다.",
-            "description":"평일 9시부터 22시까지 당일 예약만 가능합니다.",
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            "title":"현재 예약할 수 없는 시간입니다",
+            "description":"평일 9시~22시까지만 당일 예약"
           }}]
         }
       });
     }
-
-    if (isWrongHours(start_time_str, end_time_str)) {
+    if(isWrongHours(start_time_str,end_time_str)){
       console.log("[WARN] Wrong hours");
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"30분부터 최대 4시간까지 신청 가능합니다.",
-            "description": `- 방 종류: ${room_type}\n- 신청한 시간: ${displayTime}\n\n다시 시도해주세요.`,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            "title":"30분부터 최대4시간 신청 가능합니다",
+            "description":`요청시간: ${displayTime}`
           }}]
         }
       });
     }
 
-    if (await checkOverlap(table, start_db, end_db, room_type)) {
+    // 중복 검사
+    if(await checkOverlap(table, dateStr, start_db, end_db, room_type)){
       console.log("[WARN] Overlap->", room_type);
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"해당 일시에 겹치는 예약이 있습니다.",
-            "description": `- 방 종류: ${room_type}\n- 신청한 시간: ${displayTime}\n\n예약 현황을 확인 후 다시 신청해주세요.`,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            "title":"해당 일시에 겹치는 예약이 있습니다",
+            "description":`- 방:${room_type}\n- 시간:${displayTime}`
           }}]
         }
       });
     }
 
-    // 새 코드 생성
+    // 예약 코드 생성
     const reserve_code = await generateReserveCode(room_type);
-    const hiddenName = hideMiddleChar(client_info.name);
+    const hiddenName   = hideMiddleChar(client_info.name);
 
     // DB 저장
-    await addToDatabase(table, reserve_code, room_type, start_db, end_db, hiddenName, client_info, kakao_id);
+    await addToDatabase(table, reserve_code, room_type, dateStr, start_db, end_db, hiddenName, client_info, kakao_id);
     console.log("[SUCCESS] Reserved->", reserve_code);
 
     // 응답
     return res.send({
-      "version": "2.0",
+      "version":"2.0",
       "template":{
         "outputs":[{"textCard":{
-          "title":"성공적으로 예약되었습니다.",
-          "description":`- 방 종류: ${room_type}\n- 예약 번호: ${reserve_code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}`,
-          "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+          "title":"성공적으로 예약되었습니다",
+          "description":`- 방: ${room_type}\n- 예약번호: ${reserve_code}\n- 시간: ${displayTime}\n- 신청자: ${hiddenName}`
         }}]
       }
     });
   } catch(err){
     console.error("[ERROR] reserve:", err);
-    return res.send({ "status": "FAIL", "message": "예약 처리 중 오류 발생" });
+    return res.send({status:"FAIL", message:"예약 처리 중 오류"});
   }
 }
 
 /***********************************************
  * (B) 충전기 예약
  ***********************************************/
-async function reserveCharger(reqBody, res, type) {
+async function reserveCharger(reqBody, res, type){
   console.log("[INFO] reserveCharger->", type);
   try {
-    const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
-    const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
+    const start_time_str = JSON.parse(reqBody.action.params.start_time).value; // "16:30"
+    const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;   // "18:30"
     const client_info    = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id       = reqBody.userRequest.user.id;
     const displayTime    = `${start_time_str} - ${end_time_str}`;
 
+    // 날짜
     const now = new Date();
-    const todayDate = now.toISOString().split('T')[0];
-    const start_db = `${todayDate} ${start_time_str}:00`;
-    const end_db   = `${todayDate} ${end_time_str}:00`;
-    const table = 'charger';
+    const dateStr = now.toISOString().split('T')[0];
+    // TIME
+    const start_db = `${start_time_str}:00`;
+    const end_db   = `${end_time_str}:00`;
 
-    // 학생회비 납부 확인
-    if (await isNotPayer(client_info.name, client_info.id)) {
+    // table='charger'
+    const table='charger';
+
+    // 납부자 여부
+    if(await isNotPayer(client_info.name, client_info.id)){
       console.log("[WARN] Not a payer");
-      const desc = `- 이름: ${client_info.name}\n- 학번: ${client_info.id}\n학생회비 납부자가 아닙니다.`;
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"학생회비 납부자가 아닙니다.",
-            "description":desc,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            "title":"학생회비 납부자가 아닙니다",
+            "description":`이름:${client_info.name}\n학번:${client_info.id}`
           }}]
         }
       });
     }
 
-    if (!isAvailableTime()) {
-      console.log("[WARN] Not available time-charger");
-      const desc = `평일 9시부터 22시까지 당일 예약만 가능합니다.`;
+    if(!isAvailableTime()){
+      console.log("[WARN] not available time-charger");
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"현재 예약할 수 없는 시간입니다.",
-            "description":desc,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처럼으로"}]
+            "title":"현재 예약할 수 없는 시간입니다",
+            "description":"평일 9시~22시 당일만 가능"
           }}]
         }
       });
     }
 
-    if (isWrongHours(start_time_str, end_time_str)) {
+    if(isWrongHours(start_time_str,end_time_str)){
       console.log("[WARN] Wrong hours-charger");
-      const desc = `- 충전기 종류: ${type}\n- 신청한 시간: ${displayTime}\n\n확인 후 다시 시도해주세요.`;
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{"textCard":{
-            "title":"30분부터 최대 4시간까지 신청 가능합니다.",
-            "description":desc,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            "title":"30분부터 최대4시간 가능",
+            "description":`충전기:${type}\n시간:${displayTime}`
           }}]
         }
       });
     }
 
-    // 중복 확인
-    if (await checkOverlap(table, start_db, end_db, `${type} 1`)) {
+    // 중복 -> type + ' 1' or type + ' 2'
+    // 예 "노트북 충전기 (C-Type 65W) 1"
+    // 번갈아 예약
+    if(await checkOverlap(table, dateStr, start_db, end_db, `${type} 1`)){
       console.log("[DEBUG] Overlap with type1-> check type2");
-      if (await checkOverlap(table, start_db, end_db, `${type} 2`)) {
-        console.log("[WARN] Both overlapped");
-        const desc = `- 충전기 종류: ${type}\n- 신청 시간: ${displayTime}\n\n모든 충전기가 사용중입니다.`;
+      if(await checkOverlap(table, dateStr, start_db, end_db, `${type} 2`)){
+        console.log("[WARN] Both chargers overlapped");
         return res.send({
           "version":"2.0",
           "template":{
             "outputs":[{"textCard":{
-              "title":"모든 충전기가 사용중입니다.",
-              "description":desc,
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+              "title":"모든 충전기가 사용중입니다",
+              "description":`충전기:${type}\n시간:${displayTime}`
             }}]
           }
         });
       } else {
-        // type2 가능
-        console.log("[INFO] Using type2");
-        const code = await generateReserveCode('CHARGER');
-        const hiddenName = hideMiddleChar(client_info.name);
-        const locker_pwd = await getLockertPassword(`${type} 2`);
-        const desc = `- 충전기 종류: ${type} 2\n- 사물함 비밀번호: ${locker_pwd}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}`;
-        res.send({
-          "version":"2.0",
-          "template":{
-            "outputs":[{"textCard":{
-              "title":"성공적으로 대여하였습니다.",
-              "description":desc,
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
-            }}]
-          }
-        });
-        await addToDatabaseCharger(table, code, `${type} 2`, start_db, end_db, hiddenName, client_info, kakao_id);
-        console.log("[SUCCESS] Charger type2->", code);
-        return;
+        // "type2" 가능
+        const code=await generateReserveCode('CHARGER');
+        const hiddenName=hideMiddleChar(client_info.name);
+        const locker_pwd=await getLockertPassword(`${type} 2`);
+        // 응답
+        await addToDatabaseCharger(table, code, `${type} 2`, dateStr, start_db, end_db, hiddenName, client_info, kakao_id);
+        return res.send({ /* "성공적으로 대여","사물함 비번:"... */ });
       }
     }
 
-    // type1 가능
-    console.log("[INFO] Using type1");
-    const code = await generateReserveCode('CHARGER');
-    const hiddenName = hideMiddleChar(client_info.name);
-    const locker_pwd = await getLockertPassword(`${type} 1`);
-    const desc = `- 충전기 종류: ${type} 1\n- 사물함 비밀번호: ${locker_pwd}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}`;
-    res.send({
-      "version":"2.0",
-      "template":{
-        "outputs":[{"textCard":{
-          "title":"성공적으로 대여하였습니다.",
-          "description":desc,
-          "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
-        }}]
-      }
-    });
-    await addToDatabaseCharger(table, code, `${type} 1`, start_db, end_db, hiddenName, client_info, kakao_id);
-    console.log("[SUCCESS] Charger type1->", code);
+    // "type1" 가능
+    const code=await generateReserveCode('CHARGER');
+    const hiddenName=hideMiddleChar(client_info.name);
+    const locker_pwd=await getLockertPassword(`${type} 1`);
+    await addToDatabaseCharger(table, code, `${type} 1`, dateStr, start_db, end_db, hiddenName, client_info, kakao_id);
+    return res.send({ /* "성공적으로 대여" */ });
 
-  } catch (err) {
-    console.error("[ERROR] reserveCharger:", err);
-    return res.send({ "status":"FAIL", "message":"충전기 예약 중 오류" });
-  }
-}
-async function addToDatabaseCharger(tbl, code, ctype, sdb, edb, masked, info, kid) {
-  console.log("[INFO] addToDatabaseCharger->", ctype, code);
-  const conn = await pool.getConnection();
-  try {
-    const q = `INSERT INTO ${tbl} (reserve_code, charger_type, start_time, end_time, masked_name) VALUES (?,?,?,?,?)`;
-    console.log("[DEBUG] charger insert:", q);
-    await conn.execute(q, [code, ctype, sdb, edb, masked]);
-
-    const logQ = `
-      INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
-      VALUES(?,?,?,?,?,?,?)
-    `;
-    console.log("[DEBUG] logs insert:", logQ);
-    await conn.execute(logQ, [code, ctype, 'reserve', info.name, info.id, info.phone, kid]);
-
-  } finally {
-    conn.release();
+  } catch(err){
+    console.error("[ERROR] reserveCharger:",err);
+    return res.send({status:"FAIL",message:"충전기 예약 중 오류"});
   }
 }
 
@@ -574,30 +528,29 @@ async function reserveCodeCheck(reqBody, res){
  * (E) 중복 체크 (당일만)
  ***********************************************/
 
-async function checkOverlap(table, userDate, userStart, userEnd, itemType){
+async function checkOverlap(table, dateStr, startTime, endTime, itemType){
   console.log("[INFO] checkOverlap->", table, itemType);
   const conn=await pool.getConnection();
   try {
-    // table별 type column
-    let colType= (table==='charger') ? 'charger_type' : 'room_type';
+    // charger => charger_type, else => room_type
+    let col = (table==='charger')? 'charger_type' : 'room_type';
 
-    // 부분 겹침: (start_time < userEnd) AND (end_time > userStart)
-    // 날짜: (reserve_date = userDate)
     const q=`
       SELECT *
       FROM ${table}
       WHERE
-        reserve_date=?
-        AND ${colType}=?
+        reserve_date = ?
+        AND ${col} = ?
         AND start_time < ?
         AND end_time > ?
     `;
     console.log("[DEBUG] overlap query->", q);
-    const [rows] = await conn.execute(q, [userDate, itemType, userEnd, userStart]);
+    // 4개 bind
+    const [rows]=await conn.execute(q, [dateStr, itemType, endTime, startTime]);
     console.log("[DEBUG] overlap count->", rows.length);
     return (rows.length>0);
-  } catch(err){
-    console.error("[ERROR] checkOverlap:",err);
+  } catch(e){
+    console.error("[ERROR] checkOverlap:", e);
     return false;
   } finally {
     conn.release();
@@ -609,37 +562,97 @@ async function checkOverlap(table, userDate, userStart, userEnd, itemType){
 /***********************************************
  * (F) DB Insert
  ***********************************************/
-async function addToDatabase(table, code, roomType, dateStr, startStr, endStr, maskedName) {
-  
-  const conn = await pool.getConnection();
+async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName, client_info, kakao_id){
+  console.log("[INFO] addToDatabase->", table, code);
+  // debug
+  console.log("In addToDatabase arguments:", [
+    code, rtype, rDate, stime, etime, maskedName
+  ]);
+
+  const conn=await pool.getConnection();
   try {
-    const q = `
+    const q=`
       INSERT INTO ${table} (
         reserve_code, room_type, reserve_date,
         start_time, end_time, masked_name
-      ) VALUES (?,?,?,?,?,?)
+      ) VALUES(?,?,?,?,?,?)
     `;
-    // debugging
-    console.log("In addToDatabase arguments:", [
-      code, roomType, dateStr, startStr, endStr, maskedName
+    // 6개 bind
+    await conn.execute(q, [
+      code,
+      rtype,
+      rDate,       // "YYYY-MM-DD"
+      stime,       // "HH:MM:SS"
+      etime,       // "HH:MM:SS"
+      maskedName
     ]);
-    await conn.execute(q, [code, roomType, dateStr, startStr, endStr, maskedName]);
 
-    // logs에 기록
-    const logQ = `
-      INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
-      VALUES (?,?,?,?,?,?,?)
+    // logs
+    const logQ=`
+      INSERT INTO logs (
+        reserve_code, room_type, request_type,
+        name, student_id, phone, kakao_id
+      ) VALUES(?,?,?,?,?,?,?)
     `;
-    // logs에는 7개 인자
     await conn.execute(logQ, [
       code,
-      roomType,
+      rtype,
       'reserve',
+      client_info.name,
+      client_info.id,
+      client_info.phone,
+      kakao_id
     ]);
   } finally {
     conn.release();
   }
 }
+
+async function addToDatabaseCharger(table, code, ctype, rDate, stime, etime, masked, info, kakao_id){
+  console.log("[INFO] addToDatabaseCharger->", ctype, code);
+  // debug
+  console.log("In addToDatabaseCharger arguments:", [
+    code, ctype, rDate, stime, etime, masked
+  ]);
+
+  const conn=await pool.getConnection();
+  try {
+    const q=`
+      INSERT INTO ${table} (
+        reserve_code, charger_type, reserve_date,
+        start_time, end_time, masked_name
+      ) VALUES(?,?,?,?,?,?)
+    `;
+    await conn.execute(q, [
+      code,
+      ctype,
+      rDate,
+      stime,
+      etime,
+      masked
+    ]);
+
+    // logs
+    const logQ=`
+      INSERT INTO logs (
+        reserve_code, room_type, request_type,
+        name, student_id, phone, kakao_id
+      ) VALUES(?,?,?,?,?,?,?)
+    `;
+    await conn.execute(logQ, [
+      code,
+      ctype,
+      'reserve',
+      info.name,
+      info.id,
+      info.phone,
+      kakao_id
+    ]);
+  } finally {
+    conn.release();
+  }
+}
+
 
 
 
