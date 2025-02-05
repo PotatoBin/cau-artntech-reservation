@@ -609,48 +609,38 @@ async function checkOverlap(table, userDate, userStart, userEnd, itemType){
 /***********************************************
  * (F) DB Insert
  ***********************************************/
-async function addToDatabase(
-  table, code, room_type, dateString, startTimeStr, endTimeStr, maskedName, clientInfo, kakao_id
-) {
-  console.log("[INFO] addToDatabase->", table, code);
+async function addToDatabase(table, code, roomType, dateStr, startStr, endStr, maskedName) {
+  
   const conn = await pool.getConnection();
   try {
-    // 예: dateString="2025-02-05", startTimeStr="15:00:00", endTimeStr="17:00:00"
-    console.log("Arguments:", [
-      code, room_type, dateString, startTimeStr, endTimeStr, maskedName
-    ]);
-
     const q = `
-      INSERT INTO ${table} (reserve_code, room_type, reserve_date, start_time, end_time, masked_name)
-      VALUES (?,?,?,?,?,?)
+      INSERT INTO ${table} (
+        reserve_code, room_type, reserve_date,
+        start_time, end_time, masked_name
+      ) VALUES (?,?,?,?,?,?)
     `;
-    await conn.execute(q, [
-      code, room_type,
-      dateString,        // "YYYY-MM-DD"
-      startTimeStr,      // "HH:MM:SS"
-      endTimeStr,        // "HH:MM:SS"
-      maskedName
+    // debugging
+    console.log("In addToDatabase arguments:", [
+      code, roomType, dateStr, startStr, endStr, maskedName
     ]);
+    await conn.execute(q, [code, roomType, dateStr, startStr, endStr, maskedName]);
 
-    // logs 테이블
+    // logs에 기록
     const logQ = `
       INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
       VALUES (?,?,?,?,?,?,?)
     `;
+    // logs에는 7개 인자
     await conn.execute(logQ, [
       code,
-      room_type,
+      roomType,
       'reserve',
-      clientInfo.name,
-      clientInfo.id,
-      clientInfo.phone,
-      kakao_id
     ]);
-
   } finally {
     conn.release();
   }
 }
+
 
 
 /***********************************************
