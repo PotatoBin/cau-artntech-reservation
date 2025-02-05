@@ -573,35 +573,44 @@ async function reserveCodeCheck(reqBody, res){
 /***********************************************
  * (E) 중복 체크 (당일만)
  ***********************************************/
-async function checkOverlap(table, startdb, enddb, rtype){
-  console.log("[INFO] checkOverlap->", table, rtype);
-  const conn=await pool.getConnection();
-  try {
-    // 구분
-    let column = (table==='charger') ? 'charger_type' : 'room_type';
 
-    const q=`
-      SELECT * FROM ${table}
+async function checkOverlap(table, userStart, userEnd, itemType) {
+  console.log("[INFO] checkOverlap->", table, itemType);
+  
+  const conn = await pool.getConnection();
+  try {
+    // 테이블에 따라 type 컬럼 명이 다름
+    // charger면 'charger_type', 아니면 'room_type'
+    const typeColumn = (table === 'charger') ? 'charger_type' : 'room_type';
+
+    // 부분 겹침 판정:
+    // (start_time < userEnd) AND (end_time > userStart)
+    // 동시에 DATE(created_at)=CURDATE() 로 "오늘 예약"만 검사
+    const query = `
+      SELECT *
+      FROM ${table}
       WHERE
-        DATE(created_at)=CURDATE()
-        AND ${column}=?
-        AND (
-          (start_time<=? AND end_time>?)
-          OR (start_time<? AND end_time>=?)
-          OR (start_time>=? AND end_time<=?)
-        )
+        DATE(created_at) = CURDATE()
+        AND ${typeColumn} = ?
+        AND start_time < ?
+        AND end_time > ?
     `;
-    console.log("[DEBUG] overlap query->", q);
-    const [rows] = await conn.execute(q,[rtype,startdb,startdb,enddb,enddb,startdb,enddb]);
+    console.log("[DEBUG] overlap query->", query);
+
+    // 파라미터 순서: [방or충전기이름, userEnd, userStart]
+    const [rows] = await conn.execute(query, [itemType, userEnd, userStart]);
+
     console.log("[DEBUG] overlap count->", rows.length);
-    return (rows.length>0);
-  } catch(e){
-    console.error("[ERROR] checkOverlap:",e);
-    return false;
+    return (rows.length > 0); // 1건이라도 있으면 true(겹침)
+
+  } catch (e) {
+    console.error("[ERROR] checkOverlap:", e);
+    return false; // 에러 시 그냥 false 리턴 or throw
   } finally {
     conn.release();
   }
 }
+
 
 
 /***********************************************
