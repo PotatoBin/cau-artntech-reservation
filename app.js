@@ -1,5 +1,5 @@
 /*********************************************
- * app.js
+ * app.js  (서버 전체 코드 예시)
  *********************************************/
 
 require("dotenv").config();
@@ -13,22 +13,22 @@ const mysql = require('mysql2/promise');
 const morgan = require('morgan');
 
 /**
- * morgan의 date-kst 토큰 정의
- * - Date.now()는 UTC 기준이므로, +9시간(32400000 ms)을 더해 KST 시각 문자열을 만든다
+ * morgan 토큰(date-kst)에서 서버 로컬 시간을 그대로 사용
+ * (서버가 이미 KST라면 new Date()가 KST 시각을 반환)
  */
 morgan.token('date-kst', () => {
-  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000); // KST 기준 Date
-  const yyyy = kst.getFullYear();
-  const MM = String(kst.getMonth() + 1).padStart(2, '0');
-  const dd = String(kst.getDate()).padStart(2, '0');
-  const hh = String(kst.getHours()).padStart(2, '0');
-  const mm = String(kst.getMinutes()).padStart(2, '0');
-  const ss = String(kst.getSeconds()).padStart(2, '0');
+  const now = new Date(); // 추가 +9시간 하지 않음
+  const yyyy = now.getFullYear();
+  const MM = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
   return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
 });
 
 // 커스텀 포맷('combined-kst') 정의
-morgan.format('combined-kst', 
+morgan.format('combined-kst',
   ':remote-addr - :remote-user [:date-kst] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms ":referrer" ":user-agent"'
 );
 
@@ -85,26 +85,26 @@ router.head('/wakeup', async (req, res) => {
 });
 
 /***********************************************
- * 1) 헬퍼: KST 시간 구하기
+ * 1) getKSTDate -> 실제론 단순 new Date() (서버 KST)
  ***********************************************/
 function getKSTDate() {
-  // UTC 기반 타임스탬프 + 9시간 → KST
-  return new Date(Date.now() + 9 * 3600000);
+  // 서버가 이미 KST라면 new Date()만으로 KST 시각
+  return new Date();
 }
 
 /***********************************************
  * 2) 시간대 관련: 평일(월~금) 09:00~22:00 체크
  ***********************************************/
 function isAvailableTime() {
-  // "예약 가능" 여부를 'false'로, 불가능이면 'true'로 반환(반대로 설계)
+  // "예약 불가능"이면 true, 가능이면 false
   const now = getKSTDate();
-  const hour = now.getHours(); // KST 시각의 시
-  const day = now.getDay();    // 0: 일, 1: 월, ..., 6: 토
-  
+  const hour = now.getHours();
+  const day = now.getDay(); // 0: 일, 1: 월, ..., 6: 토
+
   // 토(6), 일(0)이면 불가
   if (day === 0 || day === 6) {
     console.log(`[WARN] Today is weekend(day=${day}), reservation not available`);
-    return true; // 예약 불가
+    return true;
   }
   // 9시 이하 or 22시 이상이면 불가
   if (hour < 9 || hour >= 22) {
@@ -116,19 +116,19 @@ function isAvailableTime() {
 }
 
 /***********************************************
- * 3) "방/공간" 예약 함수(절대 로직 크게 바꾸지 않음)
+ * 3) 방/공간 예약 함수 (reserve)
  ***********************************************/
 async function reserve(reqBody, res, room_type) {
-  console.log("[INFO] reserve() called for room_type:", room_type);
+  console.log("[INFO] reserve() called -> room_type:", room_type);
   try {
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str = JSON.parse(reqBody.action.params.end_time).value;
     const client_info = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id = reqBody.userRequest.user.id;
     
-    // KST 기준 날짜
+    // 오늘 날짜(서버 KST)
     const now = getKSTDate();
-    const todayDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayDate = now.toISOString().split('T')[0];
     const start_time = `${todayDate} ${start_time_str}:00`;
     const end_time = `${todayDate} ${end_time_str}:00`;
     const time_string = `${start_time_str} - ${end_time_str}`;
@@ -228,7 +228,7 @@ async function reserve(reqBody, res, room_type) {
 }
 
 /***********************************************
- * 4) 충전기 예약 함수 
+ * 4) 충전기 예약 함수 (reserveCharger)
  ***********************************************/
 async function reserveCharger(reqBody, res, type) {
   console.log("[INFO] reserveCharger() called -> type:", type);
@@ -247,7 +247,7 @@ async function reserveCharger(reqBody, res, type) {
 
     const table = 'charger';
 
-    // 1) 학생회비 납부자 체크
+    // 1) 학생회비 납부자 여부
     if (await isNotPayer(client_info.name, client_info.id)) {
       console.log("[WARN] Not a payer ->", client_info.name, client_info.id);
       const description = `- 이름: ${client_info.name}\n- 학번: ${client_info.id}\n2024학년도 1학기 예술공학대학 학생회비 납부자가 아닙니다. 정보를 제대로 입력하였는지 확인해주시고, 학생회 채널로 문의 바랍니다.`;
@@ -316,7 +316,7 @@ async function reserveCharger(reqBody, res, type) {
       return;
     }
 
-    // 4) 중복 체크 -> type 1 먼저 확인
+    // 4) 중복 체크 -> type1 먼저
     if (await checkOverlap(table, start_time, end_time, `${type} 1`)) {
       console.log(`[DEBUG] Overlap with ${type} 1 -> checking ${type} 2`);
       if (await checkOverlap(table, start_time, end_time, `${type} 2`)) {
@@ -332,7 +332,7 @@ async function reserveCharger(reqBody, res, type) {
                   "title": "모든 충전기가 사용중입니다.",
                   "description": description,
                   "buttons": [
-                    { "label": "처음으로", "action": "block", "messageText": "처럼으로" }
+                    { "label": "처음으로", "action": "block", "messageText": "처음으로" }
                   ]
                 }
               }
@@ -341,7 +341,7 @@ async function reserveCharger(reqBody, res, type) {
         });
         return;
       } else {
-        // type 1 겹침, type 2 가능
+        // type1 겹침, type2 가능
         console.log("[INFO] Using type2 charger");
         const reserve_code = await generateReserveCode('CHARGER');
         const hiddenName = hideMiddleChar(client_info.name);
@@ -369,7 +369,7 @@ async function reserveCharger(reqBody, res, type) {
       }
     }
 
-    // type 1 가능
+    // type1 가능
     console.log("[INFO] Using type1 charger");
     const reserve_code = await generateReserveCode('CHARGER');
     const hiddenName = hideMiddleChar(client_info.name);
@@ -422,7 +422,7 @@ async function addToDatabaseCharger(table, reserve_code, charger_type, start_tim
 }
 
 /***********************************************
- * 5) 예약 취소
+ * 5) 예약 취소 (reserveCancel)
  ***********************************************/
 async function reserveCancel(reqBody, res) {
   console.log("[INFO] reserveCancel() called");
@@ -488,7 +488,7 @@ async function reserveCancel(reqBody, res) {
       connection.release();
     }
 
-    // 2) room_type prefix 확인 -> DB 테이블 결정
+    // 2) room_type prefix 확인 -> DB 테이블
     let table;
     const codeFirst = reserve_code[0];
     if (['1','2','3','4'].includes(codeFirst)) {
@@ -536,7 +536,7 @@ async function reserveCancel(reqBody, res) {
                   "title": "이미 취소된 예약입니다",
                   "description": description,
                   "buttons": [
-                    { "label": "처음으로", "action": "block", "messageText": "처음으로" }
+                    { "label": "처음으로", "action": "block", "messageText": "처럼으로" }
                   ]
                 }
               }
@@ -695,7 +695,7 @@ async function reserveCodeCheck(reqBody, res) {
 }
 
 /***********************************************
- * 7) 공통 함수들 (timeStringToArray, checkOverlap 등)
+ * 7) 공통 함수들 (timeStringToArray, etc.)
  ***********************************************/
 function parseClientInfo(str) {
   const cleaned = str.replace(/[\s-]/g, '');
@@ -714,9 +714,9 @@ function timeStringToArray(timeString) {
   return splitString.map(timePart => parseInt(timePart, 10));
 }
 
-// KST 시각의 [Hour, Minute] 반환
+// 서버(Localtime)에서 HH, MM
 function getCurrentTime() {
-  const now = getKSTDate();
+  const now = getKSTDate(); // 이미 KST
   return [now.getHours(), now.getMinutes()];
 }
 
@@ -727,14 +727,13 @@ function getTimeInterval(timeArray1, timeArray2) {
   return time2InMinutes - time1InMinutes;
 }
 
-// 30분 이상, 4시간 이하
+// 30분 미만, 240분(4시간) 초과, start >= end 시 잘못된 시간으로 처리
 function isWrongHours(start_str, end_str) {
   const [sh, sm] = start_str.split(':').map(Number);
   const [eh, em] = end_str.split(':').map(Number);
   const startMinutes = sh * 60 + sm;
   const endMinutes = eh * 60 + em;
   const diff = endMinutes - startMinutes;
-  // 30분 미만이거나, 240분(4시간) 초과거나, start >= end
   return diff < 30 || diff > 240;
 }
 
@@ -770,7 +769,7 @@ async function checkOverlap(table, start_time, end_time, room_type) {
   }
 }
 
-// 방/공간 예약
+// 방/공간 예약 정보 DB 저장
 async function addToDatabase(table, reserve_code, room_type, start_time, end_time, masked_name, client_info, kakao_id) {
   console.log("[INFO] addToDatabase ->", table, reserve_code);
   const connection = await pool.getConnection();
@@ -808,7 +807,7 @@ async function isNotPayer(name, id) {
   }
 }
 
-// 사물함 비밀번호 (charger_lockers 테이블)
+// 충전기 사물함 비밀번호 (charger_lockers 테이블)
 async function getLockertPassword(type) {
   console.log("[INFO] getLockertPassword ->", type);
   const connection = await pool.getConnection();
