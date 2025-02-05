@@ -576,12 +576,15 @@ async function reserveCodeCheck(reqBody, res){
 async function checkOverlap(table, startdb, enddb, rtype){
   console.log("[INFO] checkOverlap->", table, rtype);
   const conn=await pool.getConnection();
-  try{
+  try {
+    // 구분
+    let column = (table==='charger') ? 'charger_type' : 'room_type';
+
     const q=`
       SELECT * FROM ${table}
       WHERE
         DATE(created_at)=CURDATE()
-        AND (room_type=? OR charger_type=?)
+        AND ${column}=?
         AND (
           (start_time<=? AND end_time>?)
           OR (start_time<? AND end_time>=?)
@@ -589,16 +592,17 @@ async function checkOverlap(table, startdb, enddb, rtype){
         )
     `;
     console.log("[DEBUG] overlap query->", q);
-    const [rows]=await conn.execute(q,[rtype,rtype,startdb,startdb,enddb,enddb,startdb,enddb]);
+    const [rows] = await conn.execute(q,[rtype,startdb,startdb,enddb,enddb,startdb,enddb]);
     console.log("[DEBUG] overlap count->", rows.length);
-    return rows.length>0;
+    return (rows.length>0);
   } catch(e){
-    console.error("[ERROR] checkOverlap:", e);
+    console.error("[ERROR] checkOverlap:",e);
     return false;
   } finally {
     conn.release();
   }
 }
+
 
 /***********************************************
  * (F) DB Insert
