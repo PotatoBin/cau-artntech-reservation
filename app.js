@@ -24,9 +24,17 @@ app.use("/img", express.static(path.join(__dirname, "img")));
 /***********************************************
  * 0-1) 예시: 예약 현황 조회 라우트
  ***********************************************/
+
+function getTodayKST() {
+  const now = new Date();
+  // KST 보정
+  now.setHours(now.getHours() + 9);
+  return now.toISOString().split('T')[0]; // "YYYY-MM-DD"
+}
+
 app.get("/view/newmedialibrary", async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayKST();
     const [rows] = await pool.execute(
       `SELECT reserve_code, room_type, start_time, end_time, masked_name 
        FROM new_media_library 
@@ -62,7 +70,7 @@ app.get("/view/newmedialibrary", async (req, res) => {
 
 app.get("/view/glab", async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayKST();
     const [rows] = await pool.execute(
       `SELECT reserve_code, room_type, start_time, end_time, masked_name
        FROM glab
@@ -96,7 +104,7 @@ app.get("/view/glab", async (req, res) => {
 
 app.get("/view/charger", async (req, res) => {
   try {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getTodayKST();
 
     // 1) DB에서 예약 정보 가져오기 (이미 'ORDER BY start_time ASC' 포함)
     const [rows] = await pool.execute(
