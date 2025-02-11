@@ -20,6 +20,7 @@ app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
 app.use("/img", express.static(path.join(__dirname, "img")));
+app.use(express.static(path.join(__dirname, "public")));
 
 /***********************************************
  * 0-1) 예시: 예약 현황 조회 라우트
