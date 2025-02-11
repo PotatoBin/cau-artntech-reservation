@@ -131,10 +131,10 @@ async function reserve(reqBody, res, room_type) {
     const dateStr = now.toISOString().split("T")[0];
 
     // TIME (HH:MM:SS)
-    const start_db = start_time_str + ":00";
-    const end_db   = end_time_str + ":00";
+    const start_db = start_time_str ;
+    const end_db   = end_time_str;
     // 출력할 때는 "HH:MM"만
-    const displayTime = `${start_time_str} - ${end_time_str}`;
+    const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
     let table;
     if (["01BLUE","02GRAY","03SILVER","04GOLD"].includes(room_type)) {
@@ -259,9 +259,9 @@ async function reserveCharger(reqBody, res, type) {
 
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
-    const start_db = start_time_str + ":00";
-    const end_db   = end_time_str + ":00";
-    const displayTime = `${start_time_str} - ${end_time_str}`;
+    const start_db = start_time_str;
+    const end_db   = end_time_str;
+    const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
     const table = "charger";
 
