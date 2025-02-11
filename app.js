@@ -90,6 +90,85 @@ app.get("/view/glab", async (req, res) => {
   }
 });
 
+// EJS 뷰 엔진 설정 (app.js 상단, 라우트 정의 전에)
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// /view/charger 요청에 대해 예약 정보를 조회하고 charger.ejs를 렌더링
+app.get("/view/charger", async (req, res) => {
+  try {
+    // 오늘 날짜 (YYYY-MM-DD 형식)
+    const today = new Date().toISOString().split("T")[0];
+
+    // 충전기 예약 정보를 조회 (예시: "charger" 테이블에 저장)
+    const [rows] = await pool.execute(
+      "SELECT reserve_code, charger_type, start_time, end_time, masked_name FROM charger WHERE reserve_date = ?",
+      [today]
+    );
+
+    /* 
+      rows에는 각 예약에 대해 예를 들어 다음과 같은 데이터가 있다고 가정합니다.
+      {
+        reserve_code: "700001",
+        charger_type: "노트북 충전기 (C-Type 65W) 1", // 또는 "스마트폰 충전기 (C-Type) 2", 등
+        start_time: "11:00:00",
+        end_time: "13:00:00",
+        masked_name: "홍*길"
+      }
+      
+      아래와 같이 예약 데이터를 큰 카테고리(예: "노트북 충전기 (C-Type 65W)", "스마트폰 충전기 (C-Type)", 등) 및
+      개별 아이템(예: "노트북 충전기 (C-Type 65W) 1", "노트북 충전기 (C-Type 65W) 2", …)별로 정리합니다.
+    */
+    
+    // 각 개별 아이템이 속할 큰 카테고리를 정의합니다.
+    const categoryMapping = {
+      "노트북 충전기 (C-Type 65W) 1": "노트북 충전기 (C-Type 65W)",
+      "노트북 충전기 (C-Type 65W) 2": "노트북 충전기 (C-Type 65W)",
+      "스마트폰 충전기 (C-Type) 1": "스마트폰 충전기 (C-Type)",
+      "스마트폰 충전기 (C-Type) 2": "스마트폰 충전기 (C-Type)",
+      "스마트폰 충전기 (C-Type) 3": "스마트폰 충전기 (C-Type)",
+      "아이폰 충전기 (8pin) 1": "아이폰 충전기 (8pin)",
+      "아이폰 충전기 (8pin) 2": "아이폰 충전기 (8pin)",
+      "아이폰 충전기 (8pin) 3": "아이폰 충전기 (8pin)",
+      "HDMI 케이블 1": "HDMI 케이블",
+      "HDMI 케이블 2": "HDMI 케이블",
+      "멀티탭 (3구)": "멀티탭 (3구)",
+      "멀티탭 (5구)": "멀티탭 (5구)"
+    };
+
+    // 예약 데이터를 카테고리별, 그리고 개별 아이템별로 정리할 객체를 초기화합니다.
+    const reservations = {
+      "노트북 충전기 (C-Type 65W)": {},
+      "스마트폰 충전기 (C-Type)": {},
+      "아이폰 충전기 (8pin)": {},
+      "HDMI 케이블": {},
+      "멀티탭 (3구)": {},
+      "멀티탭 (5구)": {}
+    };
+
+    rows.forEach(row => {
+      const itemName = row.charger_type; // 예: "노트북 충전기 (C-Type 65W) 1"
+      const category = categoryMapping[itemName];
+      if (category) {
+        if (!reservations[category][itemName]) {
+          reservations[category][itemName] = [];
+        }
+        reservations[category][itemName].push({
+          time: row.start_time.slice(0, 5) + " - " + row.end_time.slice(0, 5),
+          code: row.reserve_code,
+          name: row.masked_name
+        });
+      }
+    });
+
+    // EJS 템플릿 "charger.ejs"를 렌더링하면서 예약 데이터와 오늘 날짜를 전달합니다.
+    res.render("charger", { reservations, today });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("서버 오류");
+  }
+});
+
 
 /***********************************************
  * 1) Morgan (서버가 KST면 new Date()가 KST)
