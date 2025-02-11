@@ -255,6 +255,33 @@ async function reserve(reqBody, res, room_type) {
 /***********************************************
  * (B) 충전기 예약
  ***********************************************/
+const itemMap = {
+  "노트북 충전기 (C-Type 65W)": [
+    "노트북 충전기 (C-Type 65W) 1",
+    "노트북 충전기 (C-Type 65W) 2"
+  ],
+  "스마트폰 충전기 (C-Type)": [
+    "스마트폰 충전기 (C-Type) 1",
+    "스마트폰 충전기 (C-Type) 2",
+    "스마트폰 충전기 (C-Type) 3"
+  ],
+  "아이폰 충전기 (8pin)": [
+    "아이폰 충전기 (8pin) 1",
+    "아이폰 충전기 (8pin) 2",
+    "아이폰 충전기 (8pin) 3"
+  ],
+  "HDMI 케이블": [
+    "HDMI 케이블 1",
+    "HDMI 케이블 2"
+  ],
+  "멀티탭 (3구)": [
+    "멀티탭 (3구)"
+  ],
+  "멀티탭 (5구)": [
+    "멀티탭 (5구)"
+  ]
+};
+
 async function reserveItem(reqBody, res, category){
   console.log("[INFO] reserveItem() ->", category);
   try {
@@ -308,7 +335,7 @@ async function reserveItem(reqBody, res, category){
           "outputs":[{
             "textCard":{
               "title":"30분부터 최대4시간까지 신청 가능합니다",
-              "description":`- 카테고리:${category}\n- 요청 시간:${displayTime}`,
+              "description":`- 물품:${category}\n- 요청 시간:${displayTime}`,
               "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
           }]
@@ -382,7 +409,7 @@ async function reserveItem(reqBody, res, category){
         "outputs":[{
           "textCard":{
             "title":"모든 물품이 사용중입니다",
-            "description":`- 카테고리:${category}\n- 요청 시간:${displayTime}`,
+            "description":`- 물품:${category}\n- 요청 시간:${displayTime}`,
             "buttons":[
               {"label":"처음으로","action":"block","messageText":"처음으로"}
             ]
