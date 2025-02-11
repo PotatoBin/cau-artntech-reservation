@@ -10,7 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
   
-  <!-- Noto Sans KR CSS class: weight 400 -->
   <style>
     .noto-sans-kr-regular {
       font-family: "Noto Sans KR", serif;
@@ -18,10 +17,7 @@
       font-weight: 400;
       font-style: normal;
     }
-    
-    /* 기본 스타일 */
     html {
-      /* 기본 폰트 사이즈를 rem 기준으로 지정 (필요에 따라 조정) */
       font-size: 16px;
     }
     body {
@@ -41,18 +37,22 @@
       text-align: center;
       margin-bottom: 30px;
     }
+    /* header h1와 h2가 화면 크기에 따라 자동으로 축소되고 한 줄에 표시되도록 설정 */
     header h1 {
-      /* 최소 1.8em, 최대 2.5em, 중간은 5vw (화면 너비에 따라 동적으로) */
-      font-size: clamp(1.8em, 5vw, 2.5em);
+      font-size: clamp(1.5em, 5vw, 2.5em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 0;
     }
     header h2 {
-      /* 최소 1em, 최대 1.2em, 중간은 3vw */
-      font-size: clamp(1em, 3vw, 1.2em);
+      font-size: clamp(0.8em, 3vw, 1.2em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 5px 0 0;
       color: #bbb;
     }
-    /* 세부사항 영역은 그대로 유지 (필요시 다른 미디어 쿼리 추가 가능) */
+    
+    /* 나머지 스타일은 이전과 동일 */
     details {
       background: #2e2e2e;
       padding: 10px;
@@ -76,7 +76,6 @@
       font-size: 1em;
       margin-bottom: 10px;
     }
-    /* 학생회 카카오톡 링크 버튼 */
     .kakao-button {
       display: inline-block;
       background-color: #FEE500;
@@ -86,7 +85,6 @@
       font-size: 0.9em;
       text-decoration: none;
     }
-    /* 버튼 전체: 좌측 이미지는 1:1, 우측 텍스트는 나머지 영역 (전체 4:1) */
     .button {
       display: flex;
       align-items: center;
