@@ -11,6 +11,47 @@ app.get("/view", (req, res) => {
 });
 app.use("/img", express.static(path.join(__dirname, "img")));
 
+// /view/newmedialibrary 요청에 대해 동적 HTML 반환
+app.get("/view/newmedialibrary", async (req, res) => {
+  try {
+    // 오늘 날짜 (YYYY-MM-DD 형식)
+    const today = new Date().toISOString().split("T")[0];
+
+    // new_media_library 테이블에서 오늘의 예약 정보를 조회 (실제 쿼리는 필요에 따라 수정)
+    const [rows] = await pool.execute(
+      "SELECT reserve_code, room_type, start_time, end_time, masked_name FROM new_media_library WHERE reserve_date = ?",
+      [today]
+    );
+
+    // 예약 데이터를 방별로 정리 (키는 모두 소문자로 통일)
+    const reservations = {
+      "01blue": [],
+      "02gray": [],
+      "03silver": [],
+      "04gold": []
+    };
+
+    rows.forEach(row => {
+      // 예: row.room_type 값이 "01BLUE"라면 키는 "01blue"
+      const roomKey = row.room_type.toLowerCase();
+      if (reservations[roomKey]) {
+        reservations[roomKey].push({
+          time: row.start_time.slice(0,5) + " - " + row.end_time.slice(0,5),
+          code: row.reserve_code,
+          name: row.masked_name
+        });
+      }
+    });
+
+    // EJS 템플릿 "newmedialibrary.ejs"를 렌더링하여 클라이언트에 반환합니다.
+    res.render("newmedialibrary", { reservations, today });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("서버 오류");
+  }
+});
+
+
 /***********************************************
  * 1) Morgan (서버가 KST면 new Date()가 KST)
  ***********************************************/

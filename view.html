@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
   
-  <!-- Noto Sans KR CSS class: use a weight value from 100 to 900 -->
+  <!-- Noto Sans KR CSS class: weight 400 -->
   <style>
     .noto-sans-kr-regular {
       font-family: "Noto Sans KR", serif;
@@ -19,9 +19,8 @@
       font-style: normal;
     }
     
-    /* 기존 스타일 */
+    /* 기본 스타일 */
     body {
-      /* 적용하려면 body에 해당 클래스를 추가하거나 font-family를 직접 변경할 수 있습니다. */
       font-family: "Noto Sans KR", serif;
       background-color: #232323;
       color: #ffffff;
@@ -58,11 +57,12 @@
         white-space: nowrap;
       }
     }
+    /* 세부사항 영역: 상하 패딩과 마진을 줄임 */
     details {
       background: #2e2e2e;
-      padding: 15px;
+      padding: 10px;
       border-radius: 10px;
-      margin: 10px 0;
+      margin: 5px 0;
       line-height: 1.8;
     }
     summary {
@@ -74,8 +74,8 @@
     }
     details[open] summary {
       border-bottom: 1px solid #444;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
+      margin-bottom: 5px;
+      padding-bottom: 5px;
     }
     p {
       font-size: 1em;
@@ -91,7 +91,7 @@
       font-size: 0.9em;
       text-decoration: none;
     }
-    /* 버튼 전체: 좌측 이미지는 1:1, 우측 텍스트는 3배 영역 (전체 4:1) */
+    /* 버튼 전체: 좌측 이미지는 1:1, 우측 텍스트는 나머지 영역 (전체 4:1) */
     .button {
       display: flex;
       align-items: center;
@@ -104,20 +104,19 @@
       margin: 15px 0;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
-    /* 좌측 이미지 영역: 왼쪽 여백 제거, 상하 및 우측은 7.5px 적용 */
+    /* 좌측 이미지 영역: 좌측 여백 제거, 상하 및 우측 여백 7.5px 적용; 클릭 방지를 위해 pointer-events 사용 */
     .img-container {
       flex: 0 0 25%;
       margin: 7.5px 7.5px 7.5px 0;
       aspect-ratio: 1 / 1;
       box-sizing: border-box;
+      pointer-events: none;
     }
     .img-container img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 10px;
-      pointer-events: none;
-      cursor: default;
       display: block;
     }
     /* 우측 텍스트 영역: 나머지 75% */
@@ -183,7 +182,7 @@
     <details>
       <summary>대여 시스템 사용 방법</summary>
       <p>
-        1. 학생회 카카오톡 채널 친구 추가 <a class="kakao-button" href="https://pf.kakao.com/_TzxirG" target="_blank" rel="noopener noreferrer">카카오톡 링크</a><br>
+        1. 학생회 카카오톡 채널 친구 추가 (<a class="kakao-button" href="https://pf.kakao.com/_TzxirG" target="_blank" rel="noopener noreferrer">카카오톡 링크</a>)<br>
         2. 채팅 메뉴를 이용하여 챗봇 이용<br>
         3. 예약 번호를 확인하고 규칙에 맞게 공간 사용
       </p>
@@ -199,10 +198,10 @@
       </p>
     </details>
     
-    <!-- 버튼: New Media Library -->
-    <a href="/view/newmedia" class="button">
+    <!-- New Media Library 버튼: 링크 변경 -->
+    <a href="https://cauartntech.com/view/newmedialibrary" class="button">
       <div class="img-container">
-        <img src="img/1.webp" alt="New Media Library">
+        <img src="img/1.jpg" alt="New Media Library">
       </div>
       <div class="text-container">
         <h2>New Media Library</h2>
@@ -210,10 +209,9 @@
       </div>
     </a>
     
-    <!-- 버튼: GLAB -->
     <a href="/view/glab" class="button">
       <div class="img-container">
-        <img src="img/2.webp" alt="GLAB">
+        <img src="img/2.jpg" alt="GLAB">
       </div>
       <div class="text-container">
         <h2>GLAB</h2>
@@ -221,10 +219,9 @@
       </div>
     </a>
     
-    <!-- 버튼: 기타 물품 (학생회비 납부자) -->
     <a href="/view/charger" class="button">
       <div class="img-container">
-        <img src="img/3.webp" alt="기타 물품 (학생회비 납부자)">
+        <img src="img/3.jpg" alt="기타 물품 (학생회비 납부자)">
       </div>
       <div class="text-container">
         <h2>기타 물품 (학생회비 납부자)</h2>
