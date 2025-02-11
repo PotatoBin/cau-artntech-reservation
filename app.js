@@ -9,7 +9,6 @@ const path = require("path");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-
 app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
@@ -17,17 +16,12 @@ app.use("/img", express.static(path.join(__dirname, "img")));
 
 app.get("/view/newmedialibrary", async (req, res) => {
   try {
-    // 예시: 오늘 날짜를 구합니다.
     const today = new Date().toISOString().split("T")[0];
-
-    // 데이터베이스에서 오늘 예약된 New Media Library 예약 정보를 조회합니다.
-    // (실제 쿼리는 상황에 맞게 수정)
     const [rows] = await pool.execute(
       "SELECT reserve_code, room_type, start_time, end_time, masked_name FROM new_media_library WHERE reserve_date = ?",
       [today]
     );
 
-    // 예약 데이터를 방별로 정리합니다.
     const reservations = {
       "01blue": [],
       "02gray": [],
@@ -36,7 +30,6 @@ app.get("/view/newmedialibrary", async (req, res) => {
     };
 
     rows.forEach(row => {
-      // 예: row.room_type 값이 "01BLUE"라면 키는 "01blue"
       const roomKey = row.room_type.toLowerCase();
       if (reservations[roomKey]) {
         reservations[roomKey].push({
@@ -47,7 +40,6 @@ app.get("/view/newmedialibrary", async (req, res) => {
       }
     });
 
-    // newmedialibrary.ejs 템플릿을 렌더링합니다.
     res.render("newmedialibrary", { reservations, today });
   } catch (err) {
     console.error(err);
@@ -58,22 +50,18 @@ app.get("/view/newmedialibrary", async (req, res) => {
 app.get("/view/glab", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0];
-
-    // GLAB 예약은 glab 테이블 등에서 조회 (실제 쿼리는 상황에 맞게 작성)
     const [rows] = await pool.execute(
       "SELECT reserve_code, room_type, start_time, end_time, masked_name FROM glab WHERE reserve_date = ?",
       [today]
     );
 
-    // 예약 데이터를 GLAB1과 GLAB2로 구분합니다.
     const reservations = {
       "glab1": [],
       "glab2": []
     };
 
     rows.forEach(row => {
-      // row.room_type 값이 "GLAB1" 또는 "GLAB2"라고 가정
-      const key = row.room_type.toLowerCase(); // "glab1", "glab2"
+      const key = row.room_type.toLowerCase();
       if (reservations[key]) {
         reservations[key].push({
           time: row.start_time.slice(0,5) + " - " + row.end_time.slice(0,5),
@@ -90,37 +78,18 @@ app.get("/view/glab", async (req, res) => {
   }
 });
 
-// EJS 뷰 엔진 설정 (app.js 상단, 라우트 정의 전에)
+// EJS 뷰 엔진 설정
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// /view/charger 요청에 대해 예약 정보를 조회하고 charger.ejs를 렌더링
 app.get("/view/charger", async (req, res) => {
   try {
-    // 오늘 날짜 (YYYY-MM-DD 형식)
     const today = new Date().toISOString().split("T")[0];
-
-    // 충전기 예약 정보를 조회 (예시: "charger" 테이블에 저장)
     const [rows] = await pool.execute(
       "SELECT reserve_code, charger_type, start_time, end_time, masked_name FROM charger WHERE reserve_date = ?",
       [today]
     );
 
-    /* 
-      rows에는 각 예약에 대해 예를 들어 다음과 같은 데이터가 있다고 가정합니다.
-      {
-        reserve_code: "700001",
-        charger_type: "노트북 충전기 (C-Type 65W) 1", // 또는 "스마트폰 충전기 (C-Type) 2", 등
-        start_time: "11:00:00",
-        end_time: "13:00:00",
-        masked_name: "홍*길"
-      }
-      
-      아래와 같이 예약 데이터를 큰 카테고리(예: "노트북 충전기 (C-Type 65W)", "스마트폰 충전기 (C-Type)", 등) 및
-      개별 아이템(예: "노트북 충전기 (C-Type 65W) 1", "노트북 충전기 (C-Type 65W) 2", …)별로 정리합니다.
-    */
-    
-    // 각 개별 아이템이 속할 큰 카테고리를 정의합니다.
     const categoryMapping = {
       "노트북 충전기 (C-Type 65W) 1": "노트북 충전기 (C-Type 65W)",
       "노트북 충전기 (C-Type 65W) 2": "노트북 충전기 (C-Type 65W)",
@@ -136,7 +105,6 @@ app.get("/view/charger", async (req, res) => {
       "멀티탭 (5구)": "멀티탭 (5구)"
     };
 
-    // 예약 데이터를 카테고리별, 그리고 개별 아이템별로 정리할 객체를 초기화합니다.
     const reservations = {
       "노트북 충전기 (C-Type 65W)": {},
       "스마트폰 충전기 (C-Type)": {},
@@ -147,7 +115,7 @@ app.get("/view/charger", async (req, res) => {
     };
 
     rows.forEach(row => {
-      const itemName = row.charger_type; // 예: "노트북 충전기 (C-Type 65W) 1"
+      const itemName = row.charger_type; 
       const category = categoryMapping[itemName];
       if (category) {
         if (!reservations[category][itemName]) {
@@ -161,7 +129,6 @@ app.get("/view/charger", async (req, res) => {
       }
     });
 
-    // EJS 템플릿 "charger.ejs"를 렌더링하면서 예약 데이터와 오늘 날짜를 전달합니다.
     res.render("charger", { reservations, today });
   } catch (err) {
     console.error(err);
@@ -235,7 +202,6 @@ router.post("/CHARGER03", (req, res) => reserveItem(req.body, res, "아이폰 �
 
 // 새롭게 HDMI, 멀티탭 라우트 추가
 router.post("/HDMI",      (req, res) => reserveItem(req.body, res, "HDMI 케이블"));
-// 멀티탭(3구), 멀티탭(5구)을 분리
 router.post("/MULTITAP3", (req, res) => reserveItem(req.body, res, "멀티탭 (3구)"));
 router.post("/MULTITAP5", (req, res) => reserveItem(req.body, res, "멀티탭 (5구)"));
 
@@ -297,14 +263,11 @@ async function reserve(reqBody, res, room_type) {
     const client_info    = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id       = reqBody.userRequest.user.id;
 
-    // 날짜 (YYYY-MM-DD)
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
 
-    // TIME (HH:MM:SS)
     const start_db = start_time_str ;
     const end_db   = end_time_str;
-    // 출력할 때는 "HH:MM"만
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
     let table;
@@ -418,7 +381,7 @@ async function reserve(reqBody, res, room_type) {
 }
 
 /***********************************************
- * (B) 충전기 예약
+ * (B) 물품 예약 (충전기, HDMI, 멀티탭 등)
  ***********************************************/
 const itemMap = {
   "노트북 충전기 (C-Type 65W)": [
@@ -461,7 +424,7 @@ async function reserveItem(reqBody, res, category){
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
-    // 1) 납부자 확인
+    // 납부자 검사
     if(await isNotPayer(client_info.name, client_info.id)){
       console.log("[WARN] Not a payer");
       return res.send({
@@ -478,7 +441,6 @@ async function reserveItem(reqBody, res, category){
       });
     }
 
-    // 2) 시간 검사
     if(!isAvailableTime()){
       return res.send({
         "version":"2.0",
@@ -508,7 +470,6 @@ async function reserveItem(reqBody, res, category){
       });
     }
 
-    // 3) itemMap
     const itemList = itemMap[category];
     if(!itemList){
       console.log("[FAIL] Unknown item category->", category);
@@ -526,17 +487,20 @@ async function reserveItem(reqBody, res, category){
       });
     }
 
-    // 4) 품목 순회
+    // itemList를 순회하며 빈 아이템 찾기
     for(const itemName of itemList){
       if(!(await checkOverlap("charger", dateStr, start_db, end_db, itemName))){
         // 예약 가능
         const code=await generateReserveCode("CHARGER");
         const hiddenName=hideMiddleChar(client_info.name);
 
+        // ★ 사물함 비번 가져오기
+        const locker_pwd = await getLockertPassword(itemName);
+
         await addToDatabaseCharger(
           "charger",
           code,
-          itemName,  // 실제 아이템명
+          itemName,
           dateStr,
           start_db,
           end_db,
@@ -546,7 +510,7 @@ async function reserveItem(reqBody, res, category){
         );
         console.log("[SUCCESS] Reserved item->", itemName);
 
-        // 응답
+        // 응답 (비밀번호 포함)
         return res.send({
           "version":"2.0",
           "template":{
@@ -554,7 +518,7 @@ async function reserveItem(reqBody, res, category){
               {
                 "textCard":{
                   "title":"성공적으로 대여하였습니다",
-                  "description":`- ${itemName}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}\n\n사용 후 반드시 제자리에!\n`,
+                  "description":`- ${itemName}\n- 사물함 비밀번호: ${locker_pwd}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}\n\n사용 후 반드시 제자리에!\n`,
                   "buttons":[
                     {"label":"처음으로","action":"block","messageText":"처음으로"}
                   ]
@@ -566,7 +530,7 @@ async function reserveItem(reqBody, res, category){
       }
     }
 
-    // 5) 전부 겹침
+    // 여기까지 왔다면 모두 겹침
     console.log("[WARN] All items in category are used->", category);
     return res.send({
       "version":"2.0",
@@ -599,7 +563,6 @@ async function reserveCancel(reqBody, res) {
     const kakao_id = reqBody.userRequest.user.id;
     console.log("[DEBUG] code=", reserve_code, "kakao_id=", kakao_id);
 
-    // logs
     const conn = await pool.getConnection();
     let logRow;
     try {
@@ -697,7 +660,7 @@ async function reserveCancel(reqBody, res) {
                   "title":"이미 취소된 예약입니다",
                   "description":d,
                   "buttons":[
-                    {"label":"처음으로","action":"block","messageText":"처럼으로"}
+                    {"label":"처음으로","action":"block","messageText":"처음으로"}
                   ]
                 }
               }
@@ -726,9 +689,8 @@ async function reserveCancel(reqBody, res) {
       ]);
 
       const origin=checkRows[0];
-      // TIME -> 'HH:MM'만
-      const st=origin.start_time.slice(0,5); // "16:30:00" -> "16:3"
-      const et=origin.end_time.slice(0,5);   //  ...
+      const st=origin.start_time.slice(0,5);
+      const et=origin.end_time.slice(0,5);
       const time_string=`${st} - ${et}`;
       const hiddenName=origin.masked_name;
       const d=`- ${logRow.room_type}\n- 예약 번호: ${reserve_code}\n- 대여 시간: ${time_string}\n- 신청자: ${hiddenName}`;
@@ -890,9 +852,9 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
     await conn.execute(q, [
       code,
       rtype,
-      rDate,       // "YYYY-MM-DD"
-      stime,       // "HH:MM:SS"
-      etime,       // "HH:MM:SS"
+      rDate,       
+      stime,       
+      etime,       
       maskedName
     ]);
 
@@ -917,10 +879,12 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
   }
 }
 
-
-// 물품(충전기, HDMI, 멀티탭 등) insert
 async function addToDatabaseCharger(table, code, itemName, rDate, stime, etime, masked, info, kakao_id){
   console.log("[INFO] addToDatabaseCharger->", itemName, code);
+  console.log("In addToDatabaseCharger arguments:", [
+    code, itemName, rDate, stime, etime, masked
+  ]);
+
   const conn=await pool.getConnection();
   try {
     const q=`
