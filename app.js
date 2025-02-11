@@ -9,6 +9,7 @@ const path = require("path");
 app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
+app.use("/img", express.static(path.join(__dirname, "img")));
 
 /***********************************************
  * 1) Morgan (서버가 KST면 new Date()가 KST)
