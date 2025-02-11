@@ -59,7 +59,6 @@
       background: #666;
       margin: 20px 0;
     }
-    /* 카테고리 섹션 */
     .charger-section {
       margin-bottom: 20px;
     }
@@ -71,36 +70,21 @@
       font-weight: bold;
       margin-bottom: 10px;
     }
-    /* 카테고리별 색상 */
-    .room-charger-laptop {
-      background-color: #B8860B; /* Dark Yellow */
-      color: #ffffff;
-    }
-    .room-charger-smart {
-      background-color: #006400; /* Dark Green */
-      color: #ffffff;
-    }
-    .room-charger-iphone {
-      background-color: #00008B; /* Dark Blue */
-      color: #ffffff;
-    }
-    .room-charger-hdmi {
-      background-color: #FF8C00; /* Dark Orange */
-      color: #ffffff;
-    }
-    .room-charger-multitap3 {
-      background-color: #008B8B; /* Dark Cyan */
-      color: #ffffff;
-    }
+    /* 모든 카테고리 박스를 전부 노란색 계열 (어두운 톤)으로 통일 (원색은 사용하지 않음) */
+    .room-charger-laptop,
+    .room-charger-smart,
+    .room-charger-iphone,
+    .room-charger-hdmi,
+    .room-charger-multitap3,
     .room-charger-multitap5 {
-      background-color: #8B0000; /* Dark Red */
+      background-color: #B8860B; /* Dark Goldenrod */
       color: #ffffff;
     }
     .item-section {
       margin-bottom: 15px;
     }
     .item-header {
-      font-size: 1.0em;
+      font-size: 1em;
       margin: 0 0 5px;
     }
     .reservation-box {
@@ -144,9 +128,25 @@
     <hr>
     
     <% 
-      // reservations 객체: 각 카테고리의 키와, 각 카테고리에 속하는 아이템 별 예약 데이터를 담은 객체
-      // 예시: reservations["노트북 충전기 (C-Type 65W)"] = { "노트북 충전기 (C-Type 65W) 1": [...], "노트북 충전기 (C-Type 65W) 2": [...] }
-      // 아래 mapping은 카테고리명과 해당 CSS 클래스를 매핑합니다.
+      // reservations 객체: 각 큰 카테고리별로 예약 데이터를 담은 객체.
+      // 예시 구조:
+      // reservations = {
+      //   "노트북 충전기 (C-Type 65W)": { "노트북 충전기 (C-Type 65W) 1": [ {time, code, name}, ... ], ... },
+      //   "스마트폰 충전기 (C-Type)": { ... },
+      //   "아이폰 충전기 (8pin)": { ... },
+      //   "HDMI 케이블": { ... },
+      //   "멀티탭 (3구)": { ... },
+      //   "멀티탭 (5구)": { ... }
+      // }
+      // 각 큰 카테고리별로 CSS 클래스는 위에서 모두 같은 노란색 계열로 통일되어 있습니다.
+      const categoryOrder = [
+        "노트북 충전기 (C-Type 65W)",
+        "스마트폰 충전기 (C-Type)",
+        "아이폰 충전기 (8pin)",
+        "HDMI 케이블",
+        "멀티탭 (3구)",
+        "멀티탭 (5구)"
+      ];
       const categoryClasses = {
         "노트북 충전기 (C-Type 65W)": "room-charger-laptop",
         "스마트폰 충전기 (C-Type)": "room-charger-smart",
@@ -156,16 +156,13 @@
         "멀티탭 (5구)": "room-charger-multitap5"
       };
       
-      // Iterate over each category in reservations
-      for (let category in reservations) {
-         const items = reservations[category];
+      categoryOrder.forEach(category => {
+         const items = reservations[category] || {};
          const catClass = categoryClasses[category] || "";
     %>
       <section class="charger-section">
         <div class="category-header <%= catClass %>"><%= category %></div>
-        <% 
-           for (let itemName in items) {
-        %>
+        <% for (let itemName in items) { %>
           <div class="item-section">
             <div class="item-header"><%= itemName %></div>
             <div class="reservation-box">
@@ -189,7 +186,7 @@
         <% } %>
       </section>
       <hr>
-    <% } %>
+    <% }); %>
     
     <div class="footer">
       <p>
