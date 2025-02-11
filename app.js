@@ -55,6 +55,40 @@ app.get("/view/newmedialibrary", async (req, res) => {
   }
 });
 
+app.get("/view/glab", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    // GLAB 예약은 glab 테이블 등에서 조회 (실제 쿼리는 상황에 맞게 작성)
+    const [rows] = await pool.execute(
+      "SELECT reserve_code, room_type, start_time, end_time, masked_name FROM glab WHERE reserve_date = ?",
+      [today]
+    );
+
+    // 예약 데이터를 GLAB1과 GLAB2로 구분합니다.
+    const reservations = {
+      "glab1": [],
+      "glab2": []
+    };
+
+    rows.forEach(row => {
+      // row.room_type 값이 "GLAB1" 또는 "GLAB2"라고 가정
+      const key = row.room_type.toLowerCase(); // "glab1", "glab2"
+      if (reservations[key]) {
+        reservations[key].push({
+          time: row.start_time.slice(0,5) + " - " + row.end_time.slice(0,5),
+          code: row.reserve_code,
+          name: row.masked_name
+        });
+      }
+    });
+
+    res.render("glab", { reservations, today });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("서버 오류");
+  }
+});
 
 
 /***********************************************
