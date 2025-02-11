@@ -9,6 +9,10 @@ const path = require("path");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.get("/", (req, res) => {
+  return res.redirect("/view");
+});
+
 app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
