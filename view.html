@@ -17,8 +17,9 @@
       font-weight: 400;
       font-style: normal;
     }
+    /* 기본 폰트 사이즈를 14px로 줄임 */
     html {
-      font-size: 16px;
+      font-size: 14px;
     }
     body {
       font-family: "Noto Sans KR", serif;
@@ -37,7 +38,7 @@
       text-align: center;
       margin-bottom: 30px;
     }
-    /* header h1와 h2가 화면 크기에 따라 자동으로 축소되고 한 줄에 표시되도록 설정 */
+    /* header h1과 h2는 clamp()로 화면 크기에 따라 동적으로 조절 */
     header h1 {
       font-size: clamp(1.5em, 5vw, 2.5em);
       white-space: nowrap;
@@ -52,7 +53,7 @@
       color: #bbb;
     }
     
-    /* 나머지 스타일은 이전과 동일 */
+    /* details 영역 (사용 안내 등) - 전체 글자 크기를 줄이고 summary는 얇게 */
     details {
       background: #2e2e2e;
       padding: 10px;
@@ -61,9 +62,9 @@
       line-height: 1.8;
     }
     summary {
-      font-size: 1.3em;
+      font-size: 1.2em;  /* 약간 줄임 */
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 300;  /* 얇게 조정 (300) */
       padding: 10px;
       margin: 0;
     }
