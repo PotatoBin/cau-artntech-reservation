@@ -20,6 +20,10 @@
     }
     
     /* 기본 스타일 */
+    html {
+      /* 기본 폰트 사이즈를 rem 기준으로 지정 (필요에 따라 조정) */
+      font-size: 16px;
+    }
     body {
       font-family: "Noto Sans KR", serif;
       background-color: #232323;
@@ -38,26 +42,17 @@
       margin-bottom: 30px;
     }
     header h1 {
-      font-size: 2.5em;
+      /* 최소 1.8em, 최대 2.5em, 중간은 5vw (화면 너비에 따라 동적으로) */
+      font-size: clamp(1.8em, 5vw, 2.5em);
       margin: 0;
     }
     header h2 {
-      font-size: 1.2em;
-      font-weight: normal;
+      /* 최소 1em, 최대 1.2em, 중간은 3vw */
+      font-size: clamp(1em, 3vw, 1.2em);
       margin: 5px 0 0;
       color: #bbb;
     }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.8em;
-        white-space: nowrap;
-      }
-      header h2 {
-        font-size: 1em;
-        white-space: nowrap;
-      }
-    }
-    /* 세부사항 영역: 상하 패딩과 마진을 줄임 */
+    /* 세부사항 영역은 그대로 유지 (필요시 다른 미디어 쿼리 추가 가능) */
     details {
       background: #2e2e2e;
       padding: 10px;
@@ -81,7 +76,7 @@
       font-size: 1em;
       margin-bottom: 10px;
     }
-    /* 학생회 카카오톡 링크를 작은 둥근 버튼으로 */
+    /* 학생회 카카오톡 링크 버튼 */
     .kakao-button {
       display: inline-block;
       background-color: #FEE500;
@@ -104,7 +99,6 @@
       margin: 15px 0;
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
-    /* 좌측 이미지 영역: 좌측 여백 제거, 상하 및 우측 여백 7.5px 적용; 클릭 방지를 위해 pointer-events 사용 */
     .img-container {
       flex: 0 0 25%;
       margin: 7.5px 7.5px 7.5px 0;
@@ -119,7 +113,6 @@
       border-radius: 10px;
       display: block;
     }
-    /* 우측 텍스트 영역: 나머지 75% */
     .text-container {
       flex: 1;
       padding: 0 10px;
@@ -198,7 +191,7 @@
       </p>
     </details>
     
-    <!-- New Media Library 버튼: 링크 변경 -->
+    <!-- 버튼들 -->
     <a href="https://cauartntech.com/view/newmedialibrary" class="button">
       <div class="img-container">
         <img src="img/1.jpg" alt="New Media Library">
