@@ -63,10 +63,16 @@ router.post("/04GOLD",  (req, res) => reserve(req.body, res, "04GOLD"));
 router.post("/GLAB1",   (req, res) => reserve(req.body, res, "GLAB1"));
 router.post("/GLAB2",   (req, res) => reserve(req.body, res, "GLAB2"));
 
-// 충전기 예약
-router.post("/CHARGER01", (req, res) => reserveCharger(req.body, res, "노트북 충전기 (C-Type 65W)"));
-router.post("/CHARGER02", (req, res) => reserveCharger(req.body, res, "스마트폰 충전기 (C-Type)"));
-router.post("/CHARGER03", (req, res) => reserveCharger(req.body, res, "아이폰 충전기 (8pin)"));
+// 기존 충전기 예약 라우트 대신, “물품” 예약 로직으로 통합
+router.post("/CHARGER01", (req, res) => reserveItem(req.body, res, "노트북 충전기 (C-Type 65W)"));
+router.post("/CHARGER02", (req, res) => reserveItem(req.body, res, "스마트폰 충전기 (C-Type)"));
+router.post("/CHARGER03", (req, res) => reserveItem(req.body, res, "아이폰 충전기 (8pin)"));
+
+// 새롭게 HDMI, 멀티탭 라우트 추가
+router.post("/HDMI",      (req, res) => reserveItem(req.body, res, "HDMI 케이블"));
+// 멀티탭(3구), 멀티탭(5구)을 분리
+router.post("/MULTITAP3", (req, res) => reserveItem(req.body, res, "멀티탭 (3구)"));
+router.post("/MULTITAP5", (req, res) => reserveItem(req.body, res, "멀티탭 (5구)"));
 
 // 유효성 검사
 router.post("/check/start_time",  (req, res) => reserveStartTimeCheck(req.body, res));
@@ -249,8 +255,8 @@ async function reserve(reqBody, res, room_type) {
 /***********************************************
  * (B) 충전기 예약
  ***********************************************/
-async function reserveCharger(reqBody, res, type) {
-  console.log("[INFO] reserveCharger->", type);
+async function reserveItem(reqBody, res, category){
+  console.log("[INFO] reserveItem() ->", category);
   try {
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
@@ -263,100 +269,82 @@ async function reserveCharger(reqBody, res, type) {
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
-    const table = "charger";
-
-    if(await isNotPayer(client_info.name, client_info.id)) {
+    // 1) 납부자 확인
+    if(await isNotPayer(client_info.name, client_info.id)){
       console.log("[WARN] Not a payer");
       return res.send({
         "version":"2.0",
         "template":{
-          "outputs":[
-            {
-              "textCard":{
-                "title":"학생회비 납부자가 아닙니다",
-                "description":`이름:${client_info.name}\n학번:${client_info.id}`,
-                "buttons":[
-                  {"label":"처음으로","action":"block","messageText":"처음으로"}
-                ]
-              }
+          "outputs":[{
+            "textCard":{
+              "title":"학생회비 납부자가 아닙니다",
+              "description":`이름:${client_info.name}\n학번:${client_info.id}`,
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
-          ]
+          }]
         }
       });
     }
 
-    if(!isAvailableTime()) {
-      console.log("[WARN] not available time-charger");
+    // 2) 시간 검사
+    if(!isAvailableTime()){
       return res.send({
         "version":"2.0",
         "template":{
-          "outputs":[
-            {
-              "textCard":{
-                "title":"현재 예약할 수 없는 시간입니다",
-                "description":"평일 9시~22시 당일만 가능",
-                "buttons":[
-                  {"label":"처음으로","action":"block","messageText":"처음으로"}
-                ]
-              }
+          "outputs":[{
+            "textCard":{
+              "title":"현재 예약할 수 없는 시간입니다",
+              "description":"평일 9시~22시 당일만 가능",
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
-          ]
+          }]
         }
       });
     }
-
-    if(isWrongHours(start_time_str,end_time_str)) {
-      console.log("[WARN] Wrong hours-charger");
+    if(isWrongHours(start_time_str,end_time_str)){
       return res.send({
         "version":"2.0",
         "template":{
-          "outputs":[
-            {
-              "textCard":{
-                "title":"30분부터 최대4시간까지 신청 가능합니다",
-                "description":`- 충전기 종류:${type}\n- 요청 시간:${displayTime}`,
-                "buttons":[
-                  {"label":"처음으로","action":"block","messageText":"처음으로"}
-                ]
-              }
+          "outputs":[{
+            "textCard":{
+              "title":"30분부터 최대4시간까지 신청 가능합니다",
+              "description":`- 카테고리:${category}\n- 요청 시간:${displayTime}`,
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
-          ]
+          }]
         }
       });
     }
 
-    // 겹침 -> type + " 1", type + " 2"
-    if(await checkOverlap(table, dateStr, start_db, end_db, `${type} 1`)) {
-      console.log("[DEBUG] Overlap with type1-> check type2");
-      if(await checkOverlap(table, dateStr, start_db, end_db, `${type} 2`)) {
-        console.log("[WARN] Both chargers overlapped");
-        return res.send({
-          "version":"2.0",
-          "template":{
-            "outputs":[
-              {
-                "textCard":{
-                  "title":"모든 충전기가 사용중입니다",
-                  "description":`- 충전기:${type}\n- 시간:${displayTime}`,
-                  "buttons":[
-                    {"label":"처음으로","action":"block","messageText":"처음으로"}
-                  ]
-                }
-              }
-            ]
-          }
-        });
-      } else {
-        // type2 가능
-        console.log("[INFO] Using type2 charger");
+    // 3) itemMap
+    const itemList = itemMap[category];
+    if(!itemList){
+      console.log("[FAIL] Unknown item category->", category);
+      return res.send({
+        "version":"2.0",
+        "template":{
+          "outputs":[{
+            "textCard":{
+              "title":"예약이 불가능한 물품입니다",
+              "description":`카테고리:${category}`,
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            }
+          }]
+        }
+      });
+    }
+
+    // 4) 품목 순회
+    for(const itemName of itemList){
+      if(!(await checkOverlap("charger", dateStr, start_db, end_db, itemName))){
+        // 예약 가능
         const code=await generateReserveCode("CHARGER");
         const hiddenName=hideMiddleChar(client_info.name);
-        const locker_pwd=await getLockertPassword(`${type} 2`);
 
         await addToDatabaseCharger(
-          table,
+          "charger",
           code,
-          `${type} 2`,
+          itemName,  // 실제 아이템명
           dateStr,
           start_db,
           end_db,
@@ -364,7 +352,9 @@ async function reserveCharger(reqBody, res, type) {
           client_info,
           kakao_id
         );
+        console.log("[SUCCESS] Reserved item->", itemName);
 
+        // 응답
         return res.send({
           "version":"2.0",
           "template":{
@@ -372,7 +362,7 @@ async function reserveCharger(reqBody, res, type) {
               {
                 "textCard":{
                   "title":"성공적으로 대여하였습니다",
-                  "description":`- 충전기 종류: ${type} 2\n- 사물함 비밀번호: ${locker_pwd}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}\n\n사용 후 반드시 제자리에!\n`,
+                  "description":`- ${itemName}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}\n\n사용 후 반드시 제자리에!\n`,
                   "buttons":[
                     {"label":"처음으로","action":"block","messageText":"처음으로"}
                   ]
@@ -384,44 +374,26 @@ async function reserveCharger(reqBody, res, type) {
       }
     }
 
-    // type1 가능
-    console.log("[INFO] Using type1 charger");
-    const code=await generateReserveCode("CHARGER");
-    const hiddenName=hideMiddleChar(client_info.name);
-    const locker_pwd=await getLockertPassword(`${type} 1`);
-
-    await addToDatabaseCharger(
-      table,
-      code,
-      `${type} 1`,
-      dateStr,
-      start_db,
-      end_db,
-      hiddenName,
-      client_info,
-      kakao_id
-    );
-
+    // 5) 전부 겹침
+    console.log("[WARN] All items in category are used->", category);
     return res.send({
       "version":"2.0",
       "template":{
-        "outputs":[
-          {
-            "textCard":{
-              "title":"성공적으로 대여하였습니다",
-              "description":`- 충전기 종류: ${type} 1\n- 사물함 비밀번호: ${locker_pwd}\n- 예약 번호: ${code}\n- 대여 시간: ${displayTime}\n- 신청자: ${hiddenName}\n\n사용 후 반드시 제자리에!\n`,
-              "buttons":[
-                {"label":"처음으로","action":"block","messageText":"처음으로"}
-              ]
-            }
+        "outputs":[{
+          "textCard":{
+            "title":"모든 물품이 사용중입니다",
+            "description":`- 카테고리:${category}\n- 요청 시간:${displayTime}`,
+            "buttons":[
+              {"label":"처음으로","action":"block","messageText":"처음으로"}
+            ]
           }
-        ]
+        }]
       }
     });
 
-  } catch (err) {
-    console.error("[ERROR] reserveCharger:", err);
-    return res.send({status:"FAIL",message:"충전기 예약 중 오류"});
+  } catch(err){
+    console.error("[ERROR] reserveItem:", err);
+    return res.send({status:"FAIL", message:"물품 예약 중 오류"});
   }
 }
 
@@ -753,12 +725,10 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
   }
 }
 
-async function addToDatabaseCharger(table, code, ctype, rDate, stime, etime, masked, info, kakao_id){
-  console.log("[INFO] addToDatabaseCharger->", ctype, code);
-  console.log("In addToDatabaseCharger arguments:", [
-    code, ctype, rDate, stime, etime, masked
-  ]);
 
+// 물품(충전기, HDMI, 멀티탭 등) insert
+async function addToDatabaseCharger(table, code, itemName, rDate, stime, etime, masked, info, kakao_id){
+  console.log("[INFO] addToDatabaseCharger->", itemName, code);
   const conn=await pool.getConnection();
   try {
     const q=`
@@ -769,14 +739,13 @@ async function addToDatabaseCharger(table, code, ctype, rDate, stime, etime, mas
     `;
     await conn.execute(q, [
       code,
-      ctype,
+      itemName,
       rDate,
       stime,
       etime,
       masked
     ]);
 
-    // logs
     const logQ=`
       INSERT INTO logs (
         reserve_code, room_type, request_type,
@@ -785,7 +754,7 @@ async function addToDatabaseCharger(table, code, ctype, rDate, stime, etime, mas
     `;
     await conn.execute(logQ, [
       code,
-      ctype,
+      itemName,
       "reserve",
       info.name,
       info.id,
