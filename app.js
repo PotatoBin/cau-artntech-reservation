@@ -4,6 +4,20 @@ const app = express();
 const router = express.Router();
 const mysql = require("mysql2/promise");
 const morgan = require("morgan");
+const path = require("path"); 
+
+router.get("/view", (req, res) => {
+  // __dirname: 현재 파일(app.js)가 위치한 디렉터리 절대경로
+  // view.html이 같은 폴더에 있다면:
+  const filePath = path.join(__dirname, "view.html");
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error("[ERROR] /view sendFile:", err);
+      res.status(500).send("Error loading view.html");
+    }
+  });
+});
+
 
 /***********************************************
  * 1) Morgan (서버가 KST면 new Date()가 KST)
