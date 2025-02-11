@@ -11,11 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
   
   <style>
+    /* Noto Sans KR 기본 클래스 */
     .noto-sans-kr-regular {
       font-family: "Noto Sans KR", serif;
       font-optical-sizing: auto;
       font-weight: 400;
       font-style: normal;
+    }
+    html {
+      font-size: 14px;
     }
     body {
       font-family: "Noto Sans KR", serif;
@@ -30,28 +34,36 @@
       margin: 0 auto;
       padding: 20px;
     }
+    /* 배너 (충전기용 배너 이미지, 필요에 따라 경로 및 이미지를 수정) */
+    .banner {
+      width: 100%;
+      aspect-ratio: 2 / 1;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .banner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     header {
       text-align: center;
       margin-bottom: 30px;
     }
+    /* header h1, h2는 clamp()를 사용해 반응형으로 조절 */
     header h1 {
-      font-size: 2.5em;
+      font-size: clamp(1.8em, 5vw, 2.5em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 0;
     }
     header h2 {
-      font-size: 1.2em;
+      font-size: clamp(1em, 3vw, 1.2em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 5px 0 0;
       color: #bbb;
-    }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.8em;
-        white-space: nowrap;
-      }
-      header h2 {
-        font-size: 1em;
-        white-space: nowrap;
-      }
     }
     hr {
       border: 0;
@@ -62,6 +74,7 @@
     .charger-section {
       margin-bottom: 20px;
     }
+    /* 카테고리 헤더: 모든 카테고리 동일하게 어두운 노란색 계열 */
     .category-header {
       display: inline-block;
       padding: 5px 10px;
@@ -69,14 +82,6 @@
       font-size: 1.1em;
       font-weight: bold;
       margin-bottom: 10px;
-    }
-    /* 모든 카테고리 박스를 전부 노란색 계열 (어두운 톤)으로 통일 (원색은 사용하지 않음) */
-    .room-charger-laptop,
-    .room-charger-smart,
-    .room-charger-iphone,
-    .room-charger-hdmi,
-    .room-charger-multitap3,
-    .room-charger-multitap5 {
       background-color: #B8860B; /* Dark Goldenrod */
       color: #ffffff;
     }
@@ -121,24 +126,31 @@
 </head>
 <body class="noto-sans-kr-regular">
   <div class="container">
+    <!-- 배너 이미지 -->
+    <div class="banner">
+      <img src="/img/3.jpg" alt="충전기 배너">
+    </div>
+    
     <header>
       <h1>충전기 대여 현황</h1>
       <h2>금일 예약 현황 (<%= today %>)</h2>
     </header>
+    
     <hr>
     
     <% 
-      // reservations 객체: 각 큰 카테고리별로 예약 데이터를 담은 객체.
-      // 예시 구조:
+      // 예약 데이터 구조 예시:
       // reservations = {
-      //   "노트북 충전기 (C-Type 65W)": { "노트북 충전기 (C-Type 65W) 1": [ {time, code, name}, ... ], ... },
+      //   "노트북 충전기 (C-Type 65W)": {
+      //       "노트북 충전기 (C-Type 65W) 1": [ {time, code, name}, ... ],
+      //       "노트북 충전기 (C-Type 65W) 2": [ ... ]
+      //   },
       //   "스마트폰 충전기 (C-Type)": { ... },
       //   "아이폰 충전기 (8pin)": { ... },
       //   "HDMI 케이블": { ... },
       //   "멀티탭 (3구)": { ... },
       //   "멀티탭 (5구)": { ... }
       // }
-      // 각 큰 카테고리별로 CSS 클래스는 위에서 모두 같은 노란색 계열로 통일되어 있습니다.
       const categoryOrder = [
         "노트북 충전기 (C-Type 65W)",
         "스마트폰 충전기 (C-Type)",
@@ -147,21 +159,12 @@
         "멀티탭 (3구)",
         "멀티탭 (5구)"
       ];
-      const categoryClasses = {
-        "노트북 충전기 (C-Type 65W)": "room-charger-laptop",
-        "스마트폰 충전기 (C-Type)": "room-charger-smart",
-        "아이폰 충전기 (8pin)": "room-charger-iphone",
-        "HDMI 케이블": "room-charger-hdmi",
-        "멀티탭 (3구)": "room-charger-multitap3",
-        "멀티탭 (5구)": "room-charger-multitap5"
-      };
       
       categoryOrder.forEach(category => {
          const items = reservations[category] || {};
-         const catClass = categoryClasses[category] || "";
     %>
       <section class="charger-section">
-        <div class="category-header <%= catClass %>"><%= category %></div>
+        <div class="category-header"><%= category %></div>
         <% for (let itemName in items) { %>
           <div class="item-section">
             <div class="item-header"><%= itemName %></div>

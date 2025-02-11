@@ -17,6 +17,10 @@
       font-weight: 400;
       font-style: normal;
     }
+    /* 기본 폰트 사이즈를 14px로 설정 */
+    html {
+      font-size: 14px;
+    }
     body {
       font-family: "Noto Sans KR", serif;
       background-color: #232323;
@@ -30,7 +34,7 @@
       margin: 0 auto;
       padding: 20px;
     }
-    /* 배너 이미지 (필요 시 수정) */
+    /* 배너 이미지 (필요 시 적용) */
     .banner {
       width: 100%;
       aspect-ratio: 2 / 1;
@@ -46,25 +50,19 @@
       text-align: center;
       margin-bottom: 30px;
     }
+    /* header h1, h2는 화면 크기에 따라 자동 축소되도록 clamp() 적용 */
     header h1 {
-      font-size: 2.5em;
+      font-size: clamp(1.8em, 5vw, 2.5em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 0;
     }
     header h2 {
-      font-size: 1.2em;
-      font-weight: normal;
+      font-size: clamp(1em, 3vw, 1.2em);
+      white-space: nowrap;
+      overflow: hidden;
       margin: 5px 0 0;
       color: #bbb;
-    }
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.8em;
-        white-space: nowrap;
-      }
-      header h2 {
-        font-size: 1em;
-        white-space: nowrap;
-      }
     }
     hr {
       border: 0;
@@ -75,7 +73,7 @@
     .room-section {
       margin-bottom: 20px;
     }
-    /* 방 이름을 감싸는 둥근 박스 */
+    /* 방 이름 둥근 박스 스타일 */
     .room-box {
       display: inline-block;
       padding: 5px 10px;
@@ -84,17 +82,15 @@
       font-weight: bold;
       margin-bottom: 10px;
     }
-    /* GLAB1, GLAB2에 맞는 색상 지정 (예시) */
+    /* GLAB1: 어두운 인디고, GLAB2: 어두운 보라 */
     .room-glab1 {
-    background-color: #4B0082; /* 어두운 인디고 */
-    color: #ffffff;
+      background-color: #4B0082;  /* 어두운 인디고 */
+      color: #ffffff;
     }
     .room-glab2 {
-    background-color: #800080; /* 약간 밝은 보라 */
-    color: #ffffff;
+      background-color: #800080;  /* 어두운 보라 */
+      color: #ffffff;
     }
-
-    /* 예약 목록 박스 (모든 예약을 감싸는 둥근 박스) */
     .reservation-box {
       background: #333;
       border: 1px solid #444;
@@ -102,7 +98,6 @@
       padding: 10px;
       margin-top: 5px;
     }
-    /* 예약 테이블 스타일 (3열: 예약 시간, 예약 번호, 신청자) */
     .reservation-table {
       width: 100%;
       border-collapse: collapse;
@@ -130,7 +125,7 @@
 </head>
 <body class="noto-sans-kr-regular">
   <div class="container">
-    <!-- 배너 이미지 (필요 시 적용) -->
+    <!-- 배너 이미지 (GLAB용 배너, 필요 시 이미지 변경) -->
     <div class="banner">
       <img src="/img/2.jpg" alt="Banner">
     </div>
