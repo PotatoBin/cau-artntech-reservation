@@ -6,24 +6,28 @@ const mysql = require("mysql2/promise");
 const morgan = require("morgan");
 const path = require("path");
 
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+
 app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
 app.use("/img", express.static(path.join(__dirname, "img")));
 
-// /view/newmedialibrary 요청에 대해 동적 HTML 반환
 app.get("/view/newmedialibrary", async (req, res) => {
   try {
-    // 오늘 날짜 (YYYY-MM-DD 형식)
+    // 예시: 오늘 날짜를 구합니다.
     const today = new Date().toISOString().split("T")[0];
 
-    // new_media_library 테이블에서 오늘의 예약 정보를 조회 (실제 쿼리는 필요에 따라 수정)
+    // 데이터베이스에서 오늘 예약된 New Media Library 예약 정보를 조회합니다.
+    // (실제 쿼리는 상황에 맞게 수정)
     const [rows] = await pool.execute(
       "SELECT reserve_code, room_type, start_time, end_time, masked_name FROM new_media_library WHERE reserve_date = ?",
       [today]
     );
 
-    // 예약 데이터를 방별로 정리 (키는 모두 소문자로 통일)
+    // 예약 데이터를 방별로 정리합니다.
     const reservations = {
       "01blue": [],
       "02gray": [],
@@ -43,13 +47,14 @@ app.get("/view/newmedialibrary", async (req, res) => {
       }
     });
 
-    // EJS 템플릿 "newmedialibrary.ejs"를 렌더링하여 클라이언트에 반환합니다.
+    // newmedialibrary.ejs 템플릿을 렌더링합니다.
     res.render("newmedialibrary", { reservations, today });
   } catch (err) {
     console.error(err);
     res.status(500).send("서버 오류");
   }
 });
+
 
 
 /***********************************************
