@@ -97,6 +97,8 @@ app.get("/view/glab", async (req, res) => {
 app.get("/view/charger", async (req, res) => {
   try {
     const today = new Date().toISOString().split("T")[0];
+
+    // 1) DB에서 예약 정보 가져오기 (이미 'ORDER BY start_time ASC' 포함)
     const [rows] = await pool.execute(
       `SELECT reserve_code, charger_type, start_time, end_time, masked_name
        FROM charger
@@ -105,6 +107,38 @@ app.get("/view/charger", async (req, res) => {
       [today]
     );
 
+    // 2) 전체 “카테고리->항목” 구조를 미리 선언
+    //    (예약 여부와 무관하게, 모든 항목을 표시하기 위해)
+    const allChargers = {
+      "노트북 충전기 (C-Type 65W)": [
+        "노트북 충전기 (C-Type 65W) 1",
+        "노트북 충전기 (C-Type 65W) 2"
+      ],
+      "스마트폰 충전기 (C-Type)": [
+        "스마트폰 충전기 (C-Type) 1",
+        "스마트폰 충전기 (C-Type) 2",
+        "스마트폰 충전기 (C-Type) 3"
+      ],
+      "아이폰 충전기 (8pin)": [
+        "아이폰 충전기 (8pin) 1",
+        "아이폰 충전기 (8pin) 2",
+        "아이폰 충전기 (8pin) 3"
+      ],
+      "HDMI 케이블": [
+        "HDMI 케이블 1",
+        "HDMI 케이블 2"
+      ],
+      "멀티탭 (3구)": [
+        "멀티탭 (3구)"
+      ],
+      "멀티탭 (5구)": [
+        "멀티탭 (5구)"
+      ]
+    };
+
+    // 3) 우리가 UI에서 쓰는 “카테고리 이름”과
+    //    DB상 charger_type(세부항목) 간의 매핑
+    //    (기존 categoryMapping 그대로)
     const categoryMapping = {
       "노트북 충전기 (C-Type 65W) 1": "노트북 충전기 (C-Type 65W)",
       "노트북 충전기 (C-Type 65W) 2": "노트북 충전기 (C-Type 65W)",
@@ -120,22 +154,23 @@ app.get("/view/charger", async (req, res) => {
       "멀티탭 (5구)": "멀티탭 (5구)"
     };
 
-    const reservations = {
-      "노트북 충전기 (C-Type 65W)": {},
-      "스마트폰 충전기 (C-Type)": {},
-      "아이폰 충전기 (8pin)": {},
-      "HDMI 케이블": {},
-      "멀티탭 (3구)": {},
-      "멀티탭 (5구)": {}
-    };
+    // 4) 실제 EJS 렌더링에 넘길 reservations 객체를
+    //    “모든 카테고리 & 모든 항목”을 초기화하여 생성
+    const reservations = {};
+    for (const categoryName in allChargers) {
+      // 예) "노트북 충전기 (C-Type 65W)": [...]
+      reservations[categoryName] = {};
+      // 세부 아이템(1번,2번 등)도 모두 미리 빈 배열로 세팅
+      allChargers[categoryName].forEach((itemName) => {
+        reservations[categoryName][itemName] = [];
+      });
+    }
 
+    // 5) DB에서 가져온 rows를 순회하며, 해당 카테고리/항목에 push
     rows.forEach(row => {
       const itemName = row.charger_type; 
       const category = categoryMapping[itemName];
       if (category) {
-        if (!reservations[category][itemName]) {
-          reservations[category][itemName] = [];
-        }
         reservations[category][itemName].push({
           time: row.start_time.slice(0, 5) + " - " + row.end_time.slice(0, 5),
           code: row.reserve_code,
@@ -144,12 +179,15 @@ app.get("/view/charger", async (req, res) => {
       }
     });
 
+    // 6) 이제 reservations에는 “예약 없는 항목”도 빈 배열이 들어 있음
+    //    EJS에서 그 빈 배열을 그려주면, "예약 없음"을 표현 가능
     res.render("charger", { reservations, today });
   } catch (err) {
     console.error(err);
     res.status(500).send("서버 오류");
   }
 });
+
 
 /***********************************************
  * 1) Morgan 로그 설정 (KST)
