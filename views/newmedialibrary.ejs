@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Media Library 대여 현황</title>
+  <title>GLAB 대여 현황</title>
   
   <!-- Google Fonts: Noto Sans KR -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,6 @@
       font-weight: 400;
       font-style: normal;
     }
-    /* 기본 폰트 사이즈를 14px로 설정 */
     html {
       font-size: 14px;
     }
@@ -38,6 +37,7 @@
       width: 100%;
       aspect-ratio: 2 / 1;
       overflow: hidden;
+      margin-bottom: 20px;
     }
     .banner img {
       width: 100%;
@@ -46,10 +46,29 @@
       display: block;
     }
     header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       text-align: center;
       margin-bottom: 30px;
     }
-    /* header h1과 h2는 clamp()를 이용해 화면 크기에 따라 동적으로 조절 */
+    /* 왼쪽, 중앙, 오른쪽 영역을 위한 컨테이너 */
+    .nav-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      color: #ffffff;
+    }
+    .nav-button svg {
+      width: 100%;
+      height: 100%;
+    }
+    .header-title {
+      flex: 1;
+      text-align: center;
+    }
     header h1 {
       font-size: clamp(1.8em, 5vw, 2.5em);
       white-space: nowrap;
@@ -80,20 +99,12 @@
       font-weight: bold;
       margin-bottom: 10px;
     }
-    .room-blue {
-      background-color: #2196F3;
+    .room-glab1 {
+      background-color: #4B0082;  /* 어두운 인디고 */
       color: #ffffff;
     }
-    .room-gray {
-      background-color: #9E9E9E;
-      color: #ffffff;
-    }
-    .room-silver {
-      background-color: #B0B0B0;
-      color: #ffffff;
-    }
-    .room-gold {
-      background-color: #FFD700;
+    .room-glab2 {
+      background-color: #800080;  /* 어두운 보라 */
       color: #ffffff;
     }
     .reservation-box {
@@ -132,30 +143,49 @@
   <div class="container">
     <!-- 배너 이미지 -->
     <div class="banner">
-      <img src="/img/1.jpg" alt="Banner">
+      <img src="/img/2.jpg" alt="Banner">
     </div>
     
     <header>
-      <h1>New Media Library (과방)</h1>
-      <h2>금일 예약 현황 (<%= today %>)</h2>
+      <!-- 왼쪽: 뒤로가기 버튼 -->
+      <a href="https://www.cauartntech.com/view" class="nav-button" title="뒤로가기">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
+          <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
+        </svg>
+      </a>
+      
+      <!-- 중앙: 헤더 제목 -->
+      <div class="header-title">
+        <h1>GLAB</h1>
+        <h2>금일 예약 현황 (<%= today %>)</h2>
+      </div>
+      
+      <!-- 오른쪽: 새로고침 버튼 -->
+      <a href="#" class="nav-button" title="새로고침" onclick="location.reload(); return false;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+        </svg>
+      </a>
     </header>
     
     <hr>
     
-    <!-- 01 Blue 예약 섹션 -->
+    <!-- GLAB1 예약 섹션 -->
     <section class="room-section">
-      <div class="room-box room-blue">01 Blue</div>
+      <div class="room-box room-glab1">GLAB1</div>
       <div class="reservation-box">
         <table class="reservation-table">
           <tbody>
-            <% if (reservations["01blue"] && reservations["01blue"].length > 0) { %>
-              <% reservations["01blue"].forEach(reservation => { %>
+            <% if (reservations["glab1"] && reservations["glab1"].length > 0) { %>
+              <% reservations["glab1"].forEach(reservation => { %>
                 <tr>
                   <td><%= reservation.time %></td>
                   <td><%= reservation.code %></td>
                   <td><%= reservation.name %></td>
                 </tr>
-              <% }) %>
+              <% }); %>
             <% } else { %>
               <tr><td colspan="3"></td></tr>
             <% } %>
@@ -164,64 +194,20 @@
       </div>
     </section>
     
-    <!-- 02 Gray 예약 섹션 -->
+    <!-- GLAB2 예약 섹션 -->
     <section class="room-section">
-      <div class="room-box room-gray">02 Gray</div>
+      <div class="room-box room-glab2">GLAB2</div>
       <div class="reservation-box">
         <table class="reservation-table">
           <tbody>
-            <% if (reservations["02gray"] && reservations["02gray"].length > 0) { %>
-              <% reservations["02gray"].forEach(reservation => { %>
+            <% if (reservations["glab2"] && reservations["glab2"].length > 0) { %>
+              <% reservations["glab2"].forEach(reservation => { %>
                 <tr>
                   <td><%= reservation.time %></td>
                   <td><%= reservation.code %></td>
                   <td><%= reservation.name %></td>
                 </tr>
-              <% }) %>
-            <% } else { %>
-              <tr><td colspan="3"></td></tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    
-    <!-- 03 Silver 예약 섹션 -->
-    <section class="room-section">
-      <div class="room-box room-silver">03 Silver</div>
-      <div class="reservation-box">
-        <table class="reservation-table">
-          <tbody>
-            <% if (reservations["03silver"] && reservations["03silver"].length > 0) { %>
-              <% reservations["03silver"].forEach(reservation => { %>
-                <tr>
-                  <td><%= reservation.time %></td>
-                  <td><%= reservation.code %></td>
-                  <td><%= reservation.name %></td>
-                </tr>
-              <% }) %>
-            <% } else { %>
-              <tr><td colspan="3"></td></tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    
-    <!-- 04 Gold 예약 섹션 -->
-    <section class="room-section">
-      <div class="room-box room-gold">04 Gold</div>
-      <div class="reservation-box">
-        <table class="reservation-table">
-          <tbody>
-            <% if (reservations["04gold"] && reservations["04gold"].length > 0) { %>
-              <% reservations["04gold"].forEach(reservation => { %>
-                <tr>
-                  <td><%= reservation.time %></td>
-                  <td><%= reservation.code %></td>
-                  <td><%= reservation.name %></td>
-                </tr>
-              <% }) %>
+              <% }); %>
             <% } else { %>
               <tr><td colspan="3"></td></tr>
             <% } %>
@@ -231,18 +217,11 @@
     </section>
     
     <hr>
-    <ins class="kakao_ad_area" style="display:none;"
-      data-ad-unit = "DAN-V7OWsyCowhzqrGuH"
-      data-ad-width = "320"
-      data-ad-height = "100"></ins>
-      <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+    
     <div class="footer">
       <p>
         교내 시설물 대여 시스템이 구축되기 전까지 교학지원팀으로부터 관리를 위임 받아<br>
         학생회에서 임시로 운영 중인 시스템입니다.
-      </p>
-      <p>
-        광고 수익은 챗봇 운영을 위해 사용됩니다.
       </p>
       <hr>
       <p>
