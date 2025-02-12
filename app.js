@@ -424,6 +424,7 @@ async function checkDuplicateSameDay(rtype, dateStr, kakao_id, conn){
  * (A) 방/GLAB 예약 (동시성 방지 + 중복확인)
  ***********************************************/
 async function reserve(reqBody, res, room_type) {
+  console.log(reqBody);
   console.log("[INFO] reserve() ->", room_type);
   let conn;
   try {
