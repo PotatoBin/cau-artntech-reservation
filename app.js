@@ -633,26 +633,19 @@ async function reserveItem(reqBody, res, category){
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
-    // 물품의 실제 세부항목 목록
-    const itemList = itemMap[category];
-    
-    // [추가] '같은 카테고리' 하루 1회 제한을 위해,
-    // itemList 중 첫 번째 아이템을 기준으로 중복 여부 검사
-    const checkTarget = itemList[0];  
-    const already = await checkDuplicateSameDay(checkTarget, dateStr, kakao_id, conn);
+    // [추가] 같은 카테고리에 이미 예약이 있는지 체크
+    const already = await checkDuplicateSameDay(category, dateStr, kakao_id, conn);
     if (already) {
       await conn.rollback();
-      console.log("[WARN] same category duplication ->", checkTarget);
+      console.log("[WARN] same category duplication ->", category);
       return res.send({
         "version":"2.0",
         "template":{
           "outputs":[{
             "textCard":{
               "title":"이미 예약 내역이 있습니다",
-              "description":"같은 항목(카테고리)은 하루에 1회만 대여 가능합니다.",
-              "buttons":[
-                {"label":"처음으로","action":"block","messageText":"처음으로"}
-              ]
+              "description":"같은 항목 대여는 하루에 1회 가능합니다.",
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
           }]
         }
