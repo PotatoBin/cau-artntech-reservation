@@ -147,7 +147,6 @@ app.get("/view/charger", async (req, res) => {
 
     // 3) 우리가 UI에서 쓰는 “카테고리 이름”과
     //    DB상 charger_type(세부항목) 간의 매핑
-    //    (기존 categoryMapping 그대로)
     const categoryMapping = {
       "노트북 충전기 (C-Type 65W) 1": "노트북 충전기 (C-Type 65W)",
       "노트북 충전기 (C-Type 65W) 2": "노트북 충전기 (C-Type 65W)",
@@ -163,13 +162,10 @@ app.get("/view/charger", async (req, res) => {
       "멀티탭 (5구)": "멀티탭 (5구)"
     };
 
-    // 4) 실제 EJS 렌더링에 넘길 reservations 객체를
-    //    “모든 카테고리 & 모든 항목”을 초기화하여 생성
+    // 4) 실제 EJS 렌더링에 넘길 reservations 객체 초기화
     const reservations = {};
     for (const categoryName in allChargers) {
-      // 예) "노트북 충전기 (C-Type 65W)": [...]
       reservations[categoryName] = {};
-      // 세부 아이템(1번,2번 등)도 모두 미리 빈 배열로 세팅
       allChargers[categoryName].forEach((itemName) => {
         reservations[categoryName][itemName] = [];
       });
@@ -188,8 +184,7 @@ app.get("/view/charger", async (req, res) => {
       }
     });
 
-    // 6) 이제 reservations에는 “예약 없는 항목”도 빈 배열이 들어 있음
-    //    EJS에서 그 빈 배열을 그려주면, "예약 없음"을 표현 가능
+    // 6) reservations에 예약이 없는 항목도 빈 배열이 들어 있음
     res.render("charger", { reservations, today });
   } catch (err) {
     console.error(err);
@@ -314,7 +309,7 @@ function isAvailableTime() {
 }
 
 /***********************************************
- * (X) "하루 1회" 중복 체크를 위한 추가 함수
+ * (X) "하루 1회" 중복 체크 함수
  ***********************************************/
 /**
  * room_type/charger_type를 "카테고리"로 묶어서 반환
@@ -339,6 +334,9 @@ function getCategoryInfo(rtype) {
   // 멀티탭 (3구 / 5구)
   const multiArr    = ["멀티탭 (3구)","멀티탭 (5구)"];
 
+  // [수정 포인트]
+  // 아래처럼 '카테고리' 문자열도 함께 묶어, 
+  // "노트북 충전기 (C-Type 65W)"라는 상위 카테고리를 주어도 laptopArr를 반환하도록 처리
   if (newMediaArr.includes(rtype)) {
     return {
       table: "new_media_library",
@@ -351,31 +349,40 @@ function getCategoryInfo(rtype) {
       column: "room_type",
       types: glabArr
     };
-  } else if (laptopArr.includes(rtype)) {
+
+  } else if (rtype === "노트북 충전기 (C-Type 65W)" || laptopArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: laptopArr
     };
-  } else if (phoneCArr.includes(rtype)) {
+
+  } else if (rtype === "스마트폰 충전기 (C-Type)" || phoneCArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: phoneCArr
     };
-  } else if (iphoneArr.includes(rtype)) {
+
+  } else if (rtype === "아이폰 충전기 (8pin)" || iphoneArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: iphoneArr
     };
-  } else if (hdmiArr.includes(rtype)) {
+
+  } else if (rtype === "HDMI 케이블" || hdmiArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: hdmiArr
     };
-  } else if (multiArr.includes(rtype)) {
+
+  } else if (
+    rtype === "멀티탭 (3구)" ||
+    rtype === "멀티탭 (5구)" ||
+    multiArr.includes(rtype)
+  ) {
     return {
       table: "charger",
       column: "charger_type",
@@ -634,6 +641,7 @@ async function reserveItem(reqBody, res, category){
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
     // [추가] 같은 카테고리에 이미 예약이 있는지 체크
+    //      → "카테고리" 이름 자체를 getCategoryInfo에 전달
     const already = await checkDuplicateSameDay(category, dateStr, kakao_id, conn);
     if (already) {
       await conn.rollback();
@@ -734,8 +742,9 @@ async function reserveItem(reqBody, res, category){
       const [overlapRows] = await conn.execute(overlapSql, [
         dateStr, itemName, end_db, start_db
       ]);
+
+      // 빈 아이템이 있으면 그 아이템으로 예약
       if (overlapRows.length === 0) {
-        // 예약 가능 → 코드 생성 & Insert
         const code=await generateReserveCode("CHARGER", conn);
         const hiddenName=hideMiddleChar(client_info.name);
 
