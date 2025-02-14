@@ -15,6 +15,7 @@ app.use(compression());
 /***********************************************
  * 0) View 설정
  ***********************************************/
+app.use("/img", express.static(path.join(__dirname, "img")));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.set("view engine", "ejs");
@@ -27,8 +28,6 @@ app.get("/", (req, res) => {
 app.get("/view", (req, res) => {
   res.sendFile(path.join(__dirname, "view.html"));
 });
-app.use("/img", express.static(path.join(__dirname, "img")));
-
 
 /***********************************************
  * 0-1) 예시: 예약 현황 조회 라우트
