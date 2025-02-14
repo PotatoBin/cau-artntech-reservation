@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>충전기 대여 현황</title>
-  <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
 
   <!-- Google Fonts: Noto Sans KR -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,157 +13,9 @@
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap"
     rel="stylesheet"
   />
-  
-  <style>
-    .noto-sans-kr-regular {
-      font-family: "Noto Sans KR", serif;
-      font-optical-sizing: auto;
-      font-weight: 400;
-      font-style: normal;
-    }
-    html {
-      font-size: 14px;
-    }
-    body {
-      font-family: "Noto Sans KR", serif;
-      background-color: #232323;
-      color: #ffffff;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      width: 90%;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    /* 배너 */
-    .banner {
-      width: 100%;
-      aspect-ratio: 2 / 1;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    .banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    /* header 영역을 flex로 만들어 좌/중앙/우 배치 */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 30px;
-    }
-    /* 좌/우 버튼 (뒤로가기, 새로고침) */
-    .nav-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      color: #ffffff;
-      text-decoration: none;
-    }
-    .nav-button svg {
-      width: 100%;
-      height: 100%;
-    }
-    /* 중앙 제목 */
-    .header-title {
-      flex: 1;
-      text-align: center;
-    }
-    .header-title h1 {
-      font-size: clamp(1.8em, 5vw, 2.5em);
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    .header-title h2 {
-      font-size: clamp(1em, 3vw, 1.2em);
-      margin: 5px 0 0;
-      color: #bbb;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    hr {
-      border: 0;
-      height: 1px;
-      background: #666;
-      margin: 20px 0;
-    }
-    .charger-section {
-      margin-bottom: 20px;
-      /* 아래에서 위로 올라오는 애니메이션 */
-      opacity: 0;
-      animation: fadeInUp 0.8s ease forwards;
-      margin-top: 10px;
-    }
-    .category-header {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 10px;
-      font-size: 1.1em;
-      font-weight: bold;
-      margin-bottom: 10px;
-      background-color: #B8860B; /* Dark Goldenrod */
-      color: #ffffff;
-    }
-    .item-section {
-      margin-bottom: 15px;
-    }
-    .item-header {
-      font-size: 1em;
-      margin: 0 0 5px;
-    }
-    .reservation-box {
-      background: #333;
-      border: 1px solid #444;
-      border-radius: 10px;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .reservation-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .reservation-table td {
-      padding: 5px 10px;
-      border-bottom: 1px solid #444;
-      font-size: 0.9em;
-      color: #bbb;
-    }
-    .reservation-table tr:last-child td {
-      border-bottom: none;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 0.9em;
-      text-align: center;
-      color: #bbb;
-    }
-    .footer a {
-      color: #ffffff;
-      text-decoration: none;
-    }
 
-    /* ------------------------------------
-       애니메이션 keyframes 정의
-    ------------------------------------ */
-    @keyframes fadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  </style>
+  <!-- 공통 CSS 파일 -->
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body class="noto-sans-kr-regular">
   <div class="container">
@@ -175,10 +27,19 @@
     <header>
       <!-- 왼쪽: 뒤로가기 버튼 -->
       <a href="https://www.cauartntech.com/view" class="nav-button" title="뒤로가기">
-        <!-- 뒤로가기 아이콘 (Bootstrap bi-arrow-left 등 자유롭게) -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
-          <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
+          <path fill-rule="evenodd"
+            d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5
+               0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5
+               0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5
+               0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5
+               1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0
+               1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
+          <path fill-rule="evenodd"
+            d="M.146 8.354a.5.5 0 0 1
+               0-.708l3-3a.5.5 0 1 1 .708.708L1.707
+               7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147
+               2.146a.5.5 0 0 1-.708.708z"/>
         </svg>
       </a>
       
@@ -190,10 +51,15 @@
       
       <!-- 오른쪽: 새로고침 버튼 -->
       <a href="#" class="nav-button" title="새로고침" onclick="location.reload(); return false;">
-        <!-- 새로고침 아이콘 (Bootstrap bi-arrow-repeat 등 자유롭게) -->
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+          <path fill-rule="evenodd"
+            d="M8 3a5 5 0 1 0 4.546 2.914.5.5
+               0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+          <path
+            d="M8 4.466V.534a.25.25 0 0
+               1 .41-.192l2.36 1.966c.12.1.12.284
+               0 .384L8.41 4.658A.25.25 0 0 1 8
+               4.466"/>
         </svg>
       </a>
     </header>
@@ -205,9 +71,8 @@
       // {
       //   "노트북 충전기 (C-Type 65W)": {
       //       "노트북 충전기 (C-Type 65W) 1": [ {time, code, name}, ... ],
-      //       "노트북 충전기 (C-Type 65W) 2": [ ... ]
+      //       ...
       //   },
-      //   "스마트폰 충전기 (C-Type)": { ... },
       //   ...
       // }
       const categoryOrder = [
@@ -240,7 +105,6 @@
                       </tr>
                     <% }); %>
                   <% } else { %>
-                    <!-- 예약이 없을 때 -->
                     <tr>
                       <td colspan="3" style="text-align:center; color:#bbb;">예약 없음</td>
                     </tr>
@@ -256,10 +120,16 @@
     <div class="footer">
       <hr>
       <p>
-        ©중앙대학교 예술공학대학 학생회 | <a href="https://pf.kakao.com/_TzxirG">문의사항</a>
+        ©중앙대학교 예술공학대학 학생회 |
+        <a href="https://pf.kakao.com/_TzxirG">문의사항</a>
       </p>
       <p>
-        Created by <a href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr">Team d{OO}b</a>
+        Created by
+        <a
+          href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr"
+        >
+          Team d{OO}b
+        </a>
       </p>
     </div>
   </div>
