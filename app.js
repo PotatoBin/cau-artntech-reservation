@@ -2,13 +2,20 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const router = express.Router();
+const compression = require("compression");
 const mysql = require("mysql2/promise");
 const morgan = require("morgan");
 const path = require("path");
 
 /***********************************************
+ * 압축 미들웨어 적용 (가능한 최상단에 배치)
+ ***********************************************/
+app.use(compression());
+
+/***********************************************
  * 0) View 설정
  ***********************************************/
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
@@ -1177,6 +1184,18 @@ async function getLockerPassword(ctype, conn){
   }
   return rows[0].password;
 }
+
+/***********************************************
+ * (X) 셀레니움, 크롤링 봇 차단 미들웨어
+ ***********************************************/
+app.use((req, res, next) => {
+  const userAgent = req.headers['user-agent'] || '';
+  if (/selenium|headlesschrome|phantomjs|puppeteer|python-requests|bot|spider|crawl/i.test(userAgent)) {
+    console.log(`[WARN] Blocked crawler/bot -> User-Agent: ${userAgent}`);
+    return res.status(403).send('Forbidden');
+  }
+  next();
+});
 
 /***********************************************
  * 서버 실행

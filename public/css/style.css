@@ -1,0 +1,319 @@
+/***********************************************
+ * 공통 폰트 및 기본 구조
+ ***********************************************/
+ .noto-sans-kr-regular {
+    font-family: "Noto Sans KR", serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  html {
+    font-size: 14px;
+  }
+  
+  body {
+    font-family: "Noto Sans KR", serif;
+    background-color: #232323;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    width: 90%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /***********************************************
+   * 헤더, 배너, footer
+   ***********************************************/
+  .banner {
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  
+  .banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+  
+  .nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: #ffffff;
+    text-decoration: none;
+  }
+  
+  .nav-button svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .header-title {
+    flex: 1;
+    text-align: center;
+  }
+  
+  header h1 {
+    font-size: clamp(1.8em, 5vw, 2.5em);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  header h2 {
+    font-size: clamp(1em, 3vw, 1.2em);
+    margin: 5px 0 0;
+    color: #bbb;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  
+  hr {
+    border: 0;
+    height: 1px;
+    background: #666;
+    margin: 20px 0;
+  }
+  
+  .footer {
+    margin-top: 20px;
+    font-size: 0.9em;
+    text-align: center;
+    color: #bbb;
+  }
+  
+  .footer a {
+    color: #ffffff;
+    text-decoration: none;
+  }
+  
+  /***********************************************
+   * 공통 버튼(메인 view.html에서 사용)
+   ***********************************************/
+  .button {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #444;
+    width: 100%;
+    aspect-ratio: 4 / 1;
+    margin: 15px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  
+  .img-container {
+    flex: 0 0 25%;
+    margin: 7.5px 7.5px 7.5px 0;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+  
+  .img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+  
+  .text-container {
+    flex: 1;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #ffffff;
+  }
+  
+  .text-container h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #ffffff;
+  }
+  
+  .text-container small {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #bbb;
+  }
+  
+  .kakao-button {
+    display: inline-block;
+    background-color: #FEE500;
+    color: #000;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.9em;
+    text-decoration: none;
+  }
+  
+  /***********************************************
+   * details & summary (메인 view.html용)
+   ***********************************************/
+  details {
+    background: #2e2e2e;
+    border-radius: 10px;
+    margin: 5px 0;
+    line-height: 1.7;
+  }
+  
+  summary {
+    font-size: 1.1em;
+    cursor: pointer;
+    font-weight: 300;
+    padding: 12px 15px;
+    margin: 0;
+    background-color: #3a3a3a;
+    border-radius: 10px;
+    list-style: none;
+    -webkit-appearance: none; 
+    -moz-appearance: none;    
+    user-select: none;
+  }
+  
+  details[open] summary {
+    border-bottom: 1px solid #444;
+    margin-bottom: 5px;
+    padding-bottom: 12px;
+  }
+  
+  /* 접힌 내용 애니메이션을 위해 별도 컨테이너 */
+  .collapsible-content {
+    overflow: hidden;
+    transition: height 0.3s ease;
+    padding: 0 15px 12px;
+    line-height: 1.8;
+  }
+  
+  .collapsible-content p {
+    margin: 0.5em 0;
+  }
+  
+  /***********************************************
+   * 예약 현황 테이블들 (newmedialibrary.ejs, glab.ejs 등)
+   ***********************************************/
+  .room-section,
+  .charger-section {
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+    margin-top: 10px;
+  }
+  
+  .room-box,
+  .category-header {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  /* New Media Library */
+  .room-blue {
+    background-color: #2196F3;
+    color: #ffffff;
+  }
+  .room-gray {
+    background-color: #9E9E9E;
+    color: #ffffff;
+  }
+  .room-silver {
+    background-color: #B0B0B0;
+    color: #ffffff;
+  }
+  .room-gold {
+    background-color: #FFD700;
+    color: #ffffff;
+  }
+  
+  /* GLAB */
+  .room-glab1 {
+    background-color: #4B0082; /* 어두운 인디고 */
+    color: #ffffff;
+  }
+  .room-glab2 {
+    background-color: #800080; /* 어두운 보라 */
+    color: #ffffff;
+  }
+  
+  /* 충전기(기타물품)에서 카테고리 헤더 */
+  .category-header {
+    background-color: #B8860B; /* DarkGoldenrod 예시 */
+    color: #ffffff;
+  }
+  .item-section {
+    margin-bottom: 15px;
+  }
+  .item-header {
+    font-size: 1em;
+    margin: 0 0 5px;
+  }
+  
+  /***********************************************
+   * 공통 reservation-box & reservation-table
+   ***********************************************/
+  .reservation-box {
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .reservation-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .reservation-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #444;
+    font-size: 0.9em;
+    color: #bbb;
+  }
+  
+  .reservation-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  /***********************************************
+   * 애니메이션 keyframes
+   ***********************************************/
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  

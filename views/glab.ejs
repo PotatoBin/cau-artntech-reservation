@@ -1,262 +1,135 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GLAB 대여 현황</title>
-  <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>충전기 대여 현황</title>
+  <link rel="icon" href="/img/favicon.ico" type="image/x-icon" />
 
   <!-- Google Fonts: Noto Sans KR -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap"
+    rel="stylesheet"
+  />
 
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1671253864811496"crossorigin="anonymous"></script>
-
-  <style>
-    .noto-sans-kr-regular {
-      font-family: "Noto Sans KR", serif;
-      font-optical-sizing: auto;
-      font-weight: 400;
-      font-style: normal;
-    }
-    html {
-      font-size: 14px;
-    }
-    body {
-      font-family: "Noto Sans KR", serif;
-      background-color: #232323;
-      color: #ffffff;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      width: 90%;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    .banner {
-      width: 100%;
-      aspect-ratio: 2 / 1;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    .banner img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    /* 왼쪽, 중앙, 오른쪽 영역을 위한 컨테이너 */
-    .nav-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      color: #ffffff;
-      text-decoration: none;
-    }
-    .nav-button svg {
-      width: 100%;
-      height: 100%;
-    }
-    .header-title {
-      flex: 1;
-      text-align: center;
-    }
-    header h1 {
-      font-size: clamp(1.8em, 5vw, 2.5em);
-      white-space: nowrap;
-      overflow: hidden;
-      margin: 0;
-    }
-    header h2 {
-      font-size: clamp(1em, 3vw, 1.2em);
-      white-space: nowrap;
-      overflow: hidden;
-      margin: 5px 0 0;
-      color: #bbb;
-    }
-    hr {
-      border: 0;
-      height: 1px;
-      background: #666;
-      margin: 20px 0;
-    }
-    .room-section {
-      margin-bottom: 20px;
-      /* 아래에서 위로 올라오는 애니메이션 */
-      opacity: 0;
-      animation: fadeInUp 0.8s ease forwards;
-      margin-top: 10px;
-    }
-    .room-box {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 10px;
-      font-size: 1.1em;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .room-glab1 {
-      background-color: #4B0082;  /* 어두운 인디고 */
-      color: #ffffff;
-    }
-    .room-glab2 {
-      background-color: #800080;  /* 어두운 보라 */
-      color: #ffffff;
-    }
-    .reservation-box {
-      background: #333;
-      border: 1px solid #444;
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-    }
-    .reservation-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .reservation-table td {
-      padding: 5px 10px;
-      border-bottom: 1px solid #444;
-      font-size: 0.9em;
-      color: #bbb;
-    }
-    .reservation-table tr:last-child td {
-      border-bottom: none;
-    }
-    .footer {
-      margin-top: 20px;
-      font-size: 0.9em;
-      text-align: center;
-      color: #bbb;
-    }
-    .footer a {
-      color: #ffffff;
-      text-decoration: none;
-    }
-
-    /* ------------------------------------
-       애니메이션 keyframes 정의
-    ------------------------------------ */
-    @keyframes fadeInUp {
-      0% {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  </style>
+  <!-- 공통 CSS 파일 -->
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body class="noto-sans-kr-regular">
   <div class="container">
     <!-- 배너 이미지 -->
     <div class="banner">
-      <img src="/img/2.jpg" alt="Banner">
+      <img src="/img/3.jpg" alt="충전기 배너">
     </div>
     
     <header>
       <!-- 왼쪽: 뒤로가기 버튼 -->
       <a href="https://www.cauartntech.com/view" class="nav-button" title="뒤로가기">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
-          <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
+          <path fill-rule="evenodd"
+            d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5
+               0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5
+               0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5
+               0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5
+               1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0
+               1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
+          <path fill-rule="evenodd"
+            d="M.146 8.354a.5.5 0 0 1
+               0-.708l3-3a.5.5 0 1 1 .708.708L1.707
+               7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147
+               2.146a.5.5 0 0 1-.708.708z"/>
         </svg>
       </a>
       
-      <!-- 중앙: 헤더 제목 -->
+      <!-- 중앙 헤더 제목 -->
       <div class="header-title">
-        <h1>GLAB</h1>
+        <h1>충전기</h1>
         <h2>금일 예약 현황 (<%= today %>)</h2>
       </div>
       
       <!-- 오른쪽: 새로고침 버튼 -->
       <a href="#" class="nav-button" title="새로고침" onclick="location.reload(); return false;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
-          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+          <path fill-rule="evenodd"
+            d="M8 3a5 5 0 1 0 4.546 2.914.5.5
+               0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+          <path
+            d="M8 4.466V.534a.25.25 0 0
+               1 .41-.192l2.36 1.966c.12.1.12.284
+               0 .384L8.41 4.658A.25.25 0 0 1 8
+               4.466"/>
         </svg>
       </a>
     </header>
     
     <hr>
     
-    <!-- GLAB1 예약 섹션 -->
-    <section class="room-section">
-      <div class="room-box room-glab1">GLAB1</div>
-      <div class="reservation-box">
-        <table class="reservation-table">
-          <tbody>
-            <% if (reservations["glab1"] && reservations["glab1"].length > 0) { %>
-              <% reservations["glab1"].forEach(reservation => { %>
-                <tr>
-                  <td><%= reservation.time %></td>
-                  <td><%= reservation.code %></td>
-                  <td><%= reservation.name %></td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <!-- 예약이 없으면 -->
-              <tr>
-                <td colspan="3" style="text-align:center; color:#bbb;">예약 없음</td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    
-    <!-- GLAB2 예약 섹션 -->
-    <section class="room-section">
-      <div class="room-box room-glab2">GLAB2</div>
-      <div class="reservation-box">
-        <table class="reservation-table">
-          <tbody>
-            <% if (reservations["glab2"] && reservations["glab2"].length > 0) { %>
-              <% reservations["glab2"].forEach(reservation => { %>
-                <tr>
-                  <td><%= reservation.time %></td>
-                  <td><%= reservation.code %></td>
-                  <td><%= reservation.name %></td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <!-- 예약이 없으면 -->
-              <tr>
-                <td colspan="3" style="text-align:center; color:#bbb;">예약 없음</td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    
-    <hr>
+    <% 
+      // reservations 예시:
+      // {
+      //   "노트북 충전기 (C-Type 65W)": {
+      //       "노트북 충전기 (C-Type 65W) 1": [ {time, code, name}, ... ],
+      //       ...
+      //   },
+      //   ...
+      // }
+      const categoryOrder = [
+        "노트북 충전기 (C-Type 65W)",
+        "스마트폰 충전기 (C-Type)",
+        "아이폰 충전기 (8pin)",
+        "HDMI 케이블",
+        "멀티탭 (3구)",
+        "멀티탭 (5구)"
+      ];
+      
+      categoryOrder.forEach(category => {
+        const items = reservations[category] || {};
+    %>
+      <section class="charger-section">
+        <div class="category-header"><%= category %></div>
+        
+        <% for (let itemName in items) { %>
+          <div class="item-section">
+            <div class="item-header"><%= itemName %></div>
+            <div class="reservation-box">
+              <table class="reservation-table">
+                <tbody>
+                  <% if (items[itemName] && items[itemName].length > 0) { %>
+                    <% items[itemName].forEach(reservation => { %>
+                      <tr>
+                        <td><%= reservation.time %></td>
+                        <td><%= reservation.code %></td>
+                        <td><%= reservation.name %></td>
+                      </tr>
+                    <% }); %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="3" style="text-align:center; color:#bbb;">예약 없음</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% } %>
+      </section>
+    <% }); %>
     
     <div class="footer">
-      <p>
-        광고 수익은 서버 운영을 위해 사용됩니다.
-      </p>
       <hr>
       <p>
-        ©중앙대학교 예술공학대학 학생회 | <a href="https://pf.kakao.com/_TzxirG">문의사항</a>
+        ©중앙대학교 예술공학대학 학생회 |
+        <a href="https://pf.kakao.com/_TzxirG">문의사항</a>
       </p>
       <p>
-        Created by <a href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr">Team d{OO}b</a>
+        Created by
+        <a
+          href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr"
+        >
+          Team d{OO}b
+        </a>
       </p>
     </div>
   </div>
