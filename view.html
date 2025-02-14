@@ -7,15 +7,181 @@
   <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
 
   <!-- Google Fonts: Noto Sans KR -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap"
-    rel="stylesheet"
-  />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap" rel="stylesheet">
+  
+  <style>
+    .noto-sans-kr-regular {
+      font-family: "Noto Sans KR", serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+    }
+    html {
+      font-size: 14px;
+    }
+    body {
+      font-family: "Noto Sans KR", serif;
+      background-color: #232323;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    header h1 {
+      font-size: clamp(1.5em, 5vw, 2.5em);
+      white-space: nowrap;
+      overflow: hidden;
+      margin: 0;
+    }
+    header h2 {
+      font-size: clamp(0.8em, 3vw, 1.2em);
+      white-space: nowrap;
+      overflow: hidden;
+      margin: 5px 0 0;
+      color: #bbb;
+    }
+    
+    /*************************************
+     * details & summary 애니메이션 + 디자인
+     *************************************/
+    details {
+      background: #2e2e2e;
+      border-radius: 10px;
+      margin: 5px 0;
+      line-height: 1.7;
+      outline: none;
+      /* 원하는 경우 box-shadow 가능
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      */
+    }
+    summary {
+      font-size: 1.1em;
+      cursor: pointer;
+      font-weight: 300;
+      /* 요약 글자를 버튼처럼 보이도록 */
+      padding: 12px 15px;
+      margin: 0;
+      background-color: #3a3a3a;
+      border-radius: 10px;
+      list-style: none;
+      -webkit-appearance: none; 
+      -moz-appearance: none;    
+      user-select: none;
+    }
+    details[open] summary {
+      border-bottom: 1px solid #444;
+      margin-bottom: 5px;
+      padding-bottom: 12px;
+    }
 
-  <!-- 공통 CSS 파일 -->
-  <link rel="stylesheet" href="/css/styles.css" />
+    /* 접힌 내용 애니메이션을 위해 별도 컨테이너 사용 */
+    .collapsible-content {
+      overflow: hidden;
+      transition: height 0.3s ease;
+      padding: 0 15px 12px;
+      line-height: 1.8;
+    }
+    .collapsible-content p {
+      margin: 0.5em 0;
+    }
+
+    /* ------------------------------------
+       아래는 버튼, 배너, footer 등 기존 스타일
+    ------------------------------------ */
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .button {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #444;
+      width: 100%;
+      aspect-ratio: 4 / 1;
+      margin: 15px 0;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+
+      opacity: 0;
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    .img-container {
+      flex: 0 0 25%;
+      margin: 7.5px 7.5px 7.5px 0;
+      aspect-ratio: 1 / 1;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+    .text-container {
+      flex: 1;
+      padding: 0 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      color: #ffffff;
+    }
+    .text-container h2 {
+      margin: 0;
+      font-size: 1.5em;
+      color: #ffffff;
+    }
+    .text-container small {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: #bbb;
+    }
+    .kakao-button {
+      display: inline-block;
+      background-color: #FEE500;
+      color: #000;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.9em;
+      text-decoration: none;
+    }
+    hr {
+      border: 0;
+      height: 1px;
+      background: #666;
+      margin: 20px 0;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      text-align: center;
+      color: #bbb;
+    }
+    .footer a {
+      color: #ffffff;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body class="noto-sans-kr-regular">
   <div class="container">
@@ -46,16 +212,8 @@
     <details>
       <summary>대여 시스템 사용 방법</summary>
       <div class="collapsible-content">
-        <p>
-          1. 학생회 카카오톡 채널 친구 추가 
-          <a
-            class="kakao-button"
-            href="https://pf.kakao.com/_TzxirG"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            카카오톡 링크
-          </a>
+        <p>1. 학생회 카카오톡 채널 친구 추가 
+          <a class="kakao-button" href="https://pf.kakao.com/_TzxirG" target="_blank" rel="noopener noreferrer">카카오톡 링크</a>
         </p>
         <p>2. 채팅 메뉴를 이용하여 챗봇 이용</p>
         <p>3. 예약 번호를 확인하고 규칙에 맞게 공간 사용</p>
@@ -112,9 +270,7 @@
       </p>
       <p>
         Created by 
-        <a
-          href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr"
-        >
+        <a href="https://www.instagram.com/team.doob?igsh=MXNxdnJpaDgzengwZQ%3D%3D&utm_source=qr">
           Team d{OO}b
         </a>
       </p>
@@ -123,47 +279,53 @@
 
   <!-- 접힘/펼침 애니메이션 스크립트 -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('details').forEach((detail) => {
-        const summary = detail.querySelector('summary');
-        const content = detail.querySelector('.collapsible-content');
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('details').forEach((detail) => {
+      const summary = detail.querySelector('summary');
+      const content = detail.querySelector('.collapsible-content');
 
-        // 페이지 로드 시, already open이면 높이를 설정
+      // 혹시 기본 화살표 표시 숨기고 싶다면:
+      summary.style.listStyle = 'none';
+      summary.style.webkitAppearance = 'none';
+      summary.style.MozAppearance = 'none';
+
+      // 페이지 로드 시, 이미 open이면 높이 설정
+      if (detail.hasAttribute('open')) {
+        content.style.height = content.scrollHeight + 'px';
+      } else {
+        content.style.height = '0px';
+      }
+
+      // summary 클릭 시
+      summary.addEventListener('click', (e) => {
+        e.preventDefault(); // 기본 접힘/펼침 막기
+
         if (detail.hasAttribute('open')) {
+          // 닫기 애니메이션
           content.style.height = content.scrollHeight + 'px';
-        } else {
-          content.style.height = '0px';
-        }
-
-        // summary 클릭 시
-        summary.addEventListener('click', (e) => {
-          e.preventDefault(); // 기본 접힘/펼침 막기
-
-          if (detail.hasAttribute('open')) {
-            // 닫기 애니메이션
-            content.style.height = content.scrollHeight + 'px';
-            requestAnimationFrame(() => {
-              content.style.height = '0px';
-            });
-            content.addEventListener('transitionend', function end() {
-              content.removeEventListener('transitionend', end);
-              detail.removeAttribute('open');
-            });
-          } else {
-            // 열기 애니메이션
-            detail.setAttribute('open', '');
+          requestAnimationFrame(() => {
             content.style.height = '0px';
-            requestAnimationFrame(() => {
-              content.style.height = content.scrollHeight + 'px';
-            });
-            content.addEventListener('transitionend', function end() {
-              content.removeEventListener('transitionend', end);
-              content.style.height = null;
-            });
-          }
-        });
+          });
+          content.addEventListener('transitionend', function end() {
+            content.removeEventListener('transitionend', end);
+            detail.removeAttribute('open');
+          });
+        } else {
+          // 열기 애니메이션
+          detail.setAttribute('open','');
+          content.style.height = '0px';
+          requestAnimationFrame(() => {
+            content.style.height = content.scrollHeight + 'px';
+          });
+          content.addEventListener('transitionend', function end() {
+            content.removeEventListener('transitionend', end);
+            // 자동 높이로 복원
+            content.style.height = null;
+          });
+        }
       });
     });
+  });
   </script>
 </body>
 </html>
