@@ -391,17 +391,16 @@ async function certifyCode(reqBody, res) {
           INSERT INTO students (name, student_id, phone, email, kakao_id)
           VALUES (?,?,?,?,?)
         `;
-        // 여기서는 이미 학생 인증을 위해 DB에 학생 정보가 존재해야 하므로,
-        // 따로 client_info를 받아오지 않고 학생 테이블에 INSERT하지 않고 진행할 수도 있으나,
-        // 예제에서는 인증 시 DB에 학생 정보 삽입을 진행하도록 처리
-        // (만약 이미 존재한다면, INSERT 대신 UPDATE 또는 무시하는 로직을 고려할 수 있습니다)
+        const clientInfo = reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info) : { name: "", id: "", phone: "" };
+
         await conn.execute(insertQ, [
-          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).name : "",
-          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).id : "",
-          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).phone : "",
+          clientInfo.name,
+          clientInfo.id,
+          clientInfo.phone,
           email,
           kakao_id
         ]);
+        
         console.log("[DEBUG] Inserted student data for certification");
         conn.release();
 
@@ -653,11 +652,11 @@ async function reserve(reqBody, res, room_type) {
           "outputs": [{
             "textCard": {
               "title": "학생 정보가 존재하지 않습니다.",
-              "description": "등록된 학생 정보가 필요합니다.",
+              "description": "재학생 인증이 필요합니다.",
               "buttons": [{
-                "label": "처음으로",
+                "label": "재학생 인증",
                 "action": "block",
-                "messageText": "처음으로"
+                "messageText": "재학생 인증"
               }]
             }
           }]
@@ -871,11 +870,11 @@ async function reserveItem(reqBody, res, category) {
           "outputs": [{
             "textCard": {
               "title": "학생 정보가 존재하지 않습니다.",
-              "description": "등록된 학생 정보가 필요합니다.",
+              "description": "재학생 인증이 필요합니다.",
               "buttons": [{
-                "label": "처음으로",
+                "label": "재학생 인증",
                 "action": "block",
-                "messageText": "처음으로"
+                "messageText": "재학생인증"
               }]
             }
           }]
