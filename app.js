@@ -337,9 +337,8 @@ function certify(reqBody, res) {
 // 인증 코드 검증 및 학생 정보 DB 저장 함수
 async function certifyCode(reqBody, res) {
   // 파라미터 파싱
-  const codeStr    = JSON.parse(reqBody.action.params.code).value;  // 문자열
-  // 4자리 정수 형식 검사
-  if (!(Number.isInteger(code) && code >= 1000 && code <= 9999)) {
+  const codeStr = JSON.parse(reqBody.action.params.code).value;
+  if (!/^\d{4}$/.test(codeStr)) {
     return res.send({
       "version": "2.0",
       "template": {
@@ -357,8 +356,8 @@ async function certifyCode(reqBody, res) {
       }
     });
   }
+  const code = parseInt(codeStr, 10);  // 정수 변환
   
-  const code       = parseInt(codeStr, 10);                         // 정수 변환
   const email      = JSON.parse(reqBody.action.params.email).value;
   const clientInfo = parseClientInfo(reqBody.action.params.client_info);
   const kakao_id   = reqBody.userRequest.user.id;
