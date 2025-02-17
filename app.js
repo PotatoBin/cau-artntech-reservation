@@ -6,6 +6,7 @@ const compression = require("compression");
 const mysql = require("mysql2/promise");
 const morgan = require("morgan");
 const path = require("path");
+const axios = require("axios");
 
 /***********************************************
  * 압축 미들웨어 적용 (가능한 최상단에 배치)
@@ -275,6 +276,166 @@ router.post("/check/reserve_code",(req, res) => reserveCodeCheck(req.body, res))
 // 예약 취소
 router.post("/cancel", (req, res) => reserveCancel(req.body, res));
 
+//재학생 인증
+router.post("/certify", (req, res) => certify(req.body, res));
+router.post("/certifycode", (req, res) => certifyCode(req.body, res));
+
+/***********************************************
+ 재학생 인증
+ ***********************************************/
+ function certify(reqBody, res) {
+  const email = reqBody.value.origin;
+
+  // 1) 중앙대 이메일 형식인지 검사
+  if(!/^[^@]+@cau\.ac\.kr$/i.test(email)) {
+    return res.send({
+      "status": "FAIL",
+      "message": "올바르지 않은 이메일 형식"
+    });
+  }
+
+  // 2) UnivCert API에 POST 요청
+  const payload = {
+    key: process.env.UNIVCERT,  // .env 파일에 UNIVCERT로 저장된 API 키
+    email: email,
+    univName: "중앙대학교",
+    univ_check: true
+  };
+
+  axios.post("https://univcert.com/api/v1/certify", payload)
+    .then((response) => {
+      /*
+        [공식 문서 예시 응답]
+        - 성공 시 : { "success": true }
+        - 실패 시 : { "status": 400, "success": false, "message": ... }
+      */
+      const data = response.data;
+      if (data.success === true) {
+        return res.send({
+          "status": "SUCCESS"
+        });
+      } else {
+        return res.send({
+          "status": "FAIL",
+          "message": data.message || "인증 요청 실패"
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("[ERROR] UnivCert API:", error.response?.data || error.message);
+      return res.send({
+        "status": "FAIL",
+        "message": (error.response?.data?.message) || "인증 요청 실패"
+      });
+    });
+}
+
+async function certifyCode(reqBody, res) {
+  // 1) 파라미터 파싱
+  const codeStr    = JSON.parse(reqBody.action.params.code).value;  // 문자열
+  const code       = parseInt(codeStr, 10);                         // 정수 변환
+  const email      = JSON.parse(reqBody.action.params.email).value;
+  const clientInfo = parseClientInfo(reqBody.action.params.client_info);
+  const kakao_id   = reqBody.userRequest.user.id;
+
+  // 2) UnivCert API에 POST할 payload 준비
+  const payload = {
+    key: process.env.UNIVCERT,  // .env에 저장된 "UNIVCERT" 키
+    email: email,               // 인증대상 이메일
+    univName: "중앙대학교",       // 중앙대라고 명시
+    code: code                  // 사용자 입력 인증코드
+  };
+
+  try {
+    // 3) UnivCert 인증코드 확인 요청
+    const response = await axios.post("https://univcert.com/api/v1/certifycode", payload);
+    const data = response.data;
+
+    if (data.success === true) {
+      // 4-A) 인증 성공 시, students 테이블에 INSERT
+      let conn;
+      try {
+        conn = await pool.getConnection();
+        const insertQ = `
+          INSERT INTO students (name, student_id, phone, email, kakao_id)
+          VALUES (?,?,?,?,?)
+        `;
+        await conn.execute(insertQ, [
+          clientInfo.name,     // 예: 홍길동
+          clientInfo.id,       // 예: 20230001 (8자리 학번)
+          clientInfo.phone,    // 예: 01012345678 (11자리)
+          email,               // ex) aaa@cau.ac.kr
+          kakao_id             // 챗봇 사용자 id
+        ]);
+        conn.release();
+
+        // 인증 성공 후, 카카오 챗봇 응답
+        return res.send({
+          "version":"2.0",
+          "template":{
+            "outputs":[{
+              "textCard":{
+                "title":"성공적으로 인증되었습니다",
+                "description": `- 이름: ${clientInfo.name}\n- 학번: ${clientInfo.id}`,
+                "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+              }
+            }]
+          }
+        });
+      } catch (dbErr) {
+        if (conn) conn.release();
+        console.error("[ERROR] DB Insert:", dbErr);
+
+        // DB 오류 시
+        return res.send({
+          "version":"2.0",
+          "template":{
+            "outputs":[{
+              "textCard":{
+                "title":"인증에 실패하였습니다.",
+                "description":"다시 시도해주세요. (DB 오류)",
+                "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+              }
+            }]
+          }
+        });
+      }
+
+    } else {
+      // 4-B) UnivCert 서버 응답은 200이지만 data.success=false
+      //      (ex: status=400, success=false, message="인증번호 불일치" 등)
+      return res.send({
+        "version":"2.0",
+        "template":{
+          "outputs":[{
+            "textCard":{
+              "title":"인증에 실패하였습니다.",
+              "description": data.message || "다시 시도해주세요.",
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            }
+          }]
+        }
+      });
+    }
+
+  } catch (error) {
+    // 4-C) 요청 자체가 실패했거나, 4xx / 5xx 에러인 경우
+    console.error("[ERROR] certifyCode UnivCert API:", error.response?.data || error.message);
+
+    return res.send({
+      "version":"2.0",
+      "template":{
+        "outputs":[{
+          "textCard":{
+            "title":"인증에 실패하였습니다.",
+            "description": (error.response?.data?.message) || "다시 시도해주세요.",
+            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+          }
+        }]
+      }
+    });
+  }
+}
 
 /***********************************************
  * Helper 함수들
