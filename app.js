@@ -336,9 +336,23 @@ function certify(reqBody, res) {
 
 // 인증 코드 검증 및 학생 정보 DB 저장 함수
 async function certifyCode(reqBody, res) {
-  // 파라미터 파싱: code 값이 정수 형태의 문자열이 아니면 오류 응답 전송
-  console.log(reqBody);
-  const codeStr = JSON.parse(reqBody.action.params.code).value;
+  // 파라미터 파싱: code 값이 정수 형태의 문자열이 아닌 경우 오류 응답 전송
+  let codeStr;
+  try {
+    const parsedCode = JSON.parse(reqBody.action.params.code);
+    if (typeof parsedCode === 'object' && parsedCode.value !== undefined) {
+      codeStr = parsedCode.value;
+    } else if (typeof parsedCode === 'string') {
+      codeStr = parsedCode;
+    } else {
+      codeStr = reqBody.action.params.code;
+    }
+  } catch (e) {
+    // JSON 파싱 실패 시, 그냥 문자열로 사용
+    codeStr = reqBody.action.params.code;
+  }
+  
+  // codeStr가 숫자로만 구성되어 있는지 검사 (자릿수 제한 없음)
   if (!/^\d+$/.test(codeStr)) {
     return res.send({
       "version": "2.0",
@@ -358,7 +372,7 @@ async function certifyCode(reqBody, res) {
     });
   }
   const code = parseInt(codeStr, 10);  // 정수 변환
-  
+
   const email      = JSON.parse(reqBody.action.params.email).value;
   const clientInfo = parseClientInfo(reqBody.action.params.client_info);
   const kakao_id   = reqBody.userRequest.user.id;
@@ -487,7 +501,6 @@ async function certifyCode(reqBody, res) {
     });
   }
 }
-
 
 /***********************************************
  * Helper 함수들
