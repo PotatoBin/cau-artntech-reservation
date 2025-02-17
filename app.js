@@ -322,10 +322,10 @@ router.post("/certifycode", (req, res) => certifyCode(req.body, res));
       }
     })
     .catch((error) => {
-      console.error("[ERROR] UnivCert API:", error.response?.data || error.message);
+      console.error("[ERROR] UnivCert API:",error.message);
       return res.send({
         "status": "FAIL",
-        "message": (error.response?.data?.message) || "인증 요청 실패"
+        "message": "인증 요청 실패"
       });
     });
 }
