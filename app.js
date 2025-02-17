@@ -336,23 +336,10 @@ function certify(reqBody, res) {
 
 // 인증 코드 검증 및 학생 정보 DB 저장 함수
 async function certifyCode(reqBody, res) {
-  // 파라미터 파싱: code 값이 정수 형태의 문자열이 아닌 경우 오류 응답 전송
-  let codeStr;
-  try {
-    const parsedCode = JSON.parse(reqBody.action.params.code);
-    if (typeof parsedCode === 'object' && parsedCode.value !== undefined) {
-      codeStr = parsedCode.value;
-    } else if (typeof parsedCode === 'string') {
-      codeStr = parsedCode;
-    } else {
-      codeStr = reqBody.action.params.code;
-    }
-  } catch (e) {
-    // JSON 파싱 실패 시, 그냥 문자열로 사용
-    codeStr = reqBody.action.params.code;
-  }
-  
-  // codeStr가 숫자로만 구성되어 있는지 검사 (자릿수 제한 없음)
+  console.log(reqBody);
+  // 파라미터 파싱: code 값이 문자열로 전달되고, 숫자로만 이루어져 있지 않으면 오류 응답 전송
+  const codeStr = reqBody.action.params.code;
+  console.log(codeStr);
   if (!/^\d+$/.test(codeStr)) {
     return res.send({
       "version": "2.0",
@@ -371,9 +358,10 @@ async function certifyCode(reqBody, res) {
       }
     });
   }
-  const code = parseInt(codeStr, 10);  // 정수 변환
+  // 숫자로만 구성된 문자열을 정수형으로 변환
+  const code = parseInt(codeStr, 10);
 
-  const email      = JSON.parse(reqBody.action.params.email).value;
+  const email      = reqBody.action.params.email;
   const clientInfo = parseClientInfo(reqBody.action.params.client_info);
   const kakao_id   = reqBody.userRequest.user.id;
 
@@ -384,7 +372,7 @@ async function certifyCode(reqBody, res) {
     key: process.env.UNIVCERT,  // .env에 저장된 "UNIVCERT" 키
     email: email,               // 인증대상 이메일
     univName: "중앙대학교",       // 중앙대라고 명시
-    code: code                  // 사용자 입력 인증코드
+    code: code                  // 사용자 입력 인증코드 (정수형)
   };
 
   console.log("[DEBUG] Payload for certifyCode UnivCert API:", payload);
@@ -461,7 +449,7 @@ async function certifyCode(reqBody, res) {
         });
       }
     } else {
-      // UnivCert 서버 응답은 200이지만 data.success=false 인 경우
+      // UnivCert 서버 응답이 200이지만 data.success=false 인 경우
       console.log("[DEBUG] 인증번호 불일치 혹은 기타 오류:", data.message);
       return res.send({
         "version": "2.0",
@@ -501,6 +489,7 @@ async function certifyCode(reqBody, res) {
     });
   }
 }
+
 
 /***********************************************
  * Helper 함수들
