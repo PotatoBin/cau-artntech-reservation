@@ -33,7 +33,6 @@ app.get("/view", (req, res) => {
 /***********************************************
  * 0-1) 예시: 예약 현황 조회 라우트
  ***********************************************/
-
 function getTodayKST() {
   const now = new Date();
   // KST 보정
@@ -200,7 +199,6 @@ app.get("/view/charger", async (req, res) => {
   }
 });
 
-
 /***********************************************
  * 1) Morgan 로그 설정 (KST)
  ***********************************************/
@@ -361,11 +359,10 @@ async function certifyCode(reqBody, res) {
   // 숫자로만 구성된 문자열을 정수형으로 변환
   const code = parseInt(codeStr, 10);
 
-  const email      = reqBody.action.params.email;
-  const clientInfo = parseClientInfo(reqBody.action.params.client_info);
-  const kakao_id   = reqBody.userRequest.user.id;
+  const email = reqBody.action.params.email;
+  const kakao_id = reqBody.userRequest.user.id;
 
-  console.log("[DEBUG] certifyCode parameters:", { code, email, clientInfo, kakao_id });
+  console.log("[DEBUG] certifyCode parameters:", { code, email, kakao_id });
   
   // UnivCert API에 POST할 payload 준비
   const payload = {
@@ -394,20 +391,18 @@ async function certifyCode(reqBody, res) {
           INSERT INTO students (name, student_id, phone, email, kakao_id)
           VALUES (?,?,?,?,?)
         `;
+        // 여기서는 이미 학생 인증을 위해 DB에 학생 정보가 존재해야 하므로,
+        // 따로 client_info를 받아오지 않고 학생 테이블에 INSERT하지 않고 진행할 수도 있으나,
+        // 예제에서는 인증 시 DB에 학생 정보 삽입을 진행하도록 처리
+        // (만약 이미 존재한다면, INSERT 대신 UPDATE 또는 무시하는 로직을 고려할 수 있습니다)
         await conn.execute(insertQ, [
-          clientInfo.name,     // 예: 홍길동
-          clientInfo.id,       // 예: 20230001 (8자리 학번)
-          clientInfo.phone,    // 예: 01012345678 (11자리)
-          email,               // ex) aaa@cau.ac.kr
-          kakao_id             // 챗봇 사용자 id
-        ]);
-        console.log("[DEBUG] Inserted student data:", {
-          name: clientInfo.name,
-          student_id: clientInfo.id,
-          phone: clientInfo.phone,
+          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).name : "",
+          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).id : "",
+          reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info).phone : "",
           email,
           kakao_id
-        });
+        ]);
+        console.log("[DEBUG] Inserted student data for certification");
         conn.release();
 
         // 인증 성공 후, 카카오 챗봇 응답
@@ -417,7 +412,7 @@ async function certifyCode(reqBody, res) {
             "outputs": [{
               "textCard": {
                 "title": "성공적으로 인증되었습니다",
-                "description": `- 이름: ${clientInfo.name}\n- 학번: ${clientInfo.id}`,
+                "description": `- 이메일: ${email}`,
                 "buttons": [{
                   "label": "처음으로",
                   "action": "block",
@@ -490,7 +485,6 @@ async function certifyCode(reqBody, res) {
   }
 }
 
-
 /***********************************************
  * Helper 함수들
  ***********************************************/
@@ -533,12 +527,6 @@ function isAvailableTime() {
 /***********************************************
  * (X) "하루 1회" 중복 체크 함수
  ***********************************************/
-/**
- * room_type/charger_type를 "카테고리"로 묶어서 반환
- *   - table: 실제 테이블명(new_media_library / glab / charger)
- *   - column: 방 vs. 물품을 구분하는 칼럼(room_type / charger_type)
- *   - types: 동일 카테고리에 속하는 모든 room_type/charger_type 배열
- */
 function getCategoryInfo(rtype) {
   // New Media Library
   const newMediaArr = ["01BLUE","02GRAY","03SILVER","04GOLD"];
@@ -556,9 +544,6 @@ function getCategoryInfo(rtype) {
   // 멀티탭 (3구 / 5구)
   const multiArr    = ["멀티탭 (3구)","멀티탭 (5구)"];
 
-  // [수정 포인트]
-  // 아래처럼 '카테고리' 문자열도 함께 묶어, 
-  // "노트북 충전기 (C-Type 65W)"라는 상위 카테고리를 주어도 laptopArr를 반환하도록 처리
   if (newMediaArr.includes(rtype)) {
     return {
       table: "new_media_library",
@@ -571,35 +556,30 @@ function getCategoryInfo(rtype) {
       column: "room_type",
       types: glabArr
     };
-
   } else if (rtype === "노트북 충전기 (C-Type 65W)" || laptopArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: laptopArr
     };
-
   } else if (rtype === "스마트폰 충전기 (C-Type)" || phoneCArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: phoneCArr
     };
-
   } else if (rtype === "아이폰 충전기 (8pin)" || iphoneArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: iphoneArr
     };
-
   } else if (rtype === "HDMI 케이블" || hdmiArr.includes(rtype)) {
     return {
       table: "charger",
       column: "charger_type",
       types: hdmiArr
     };
-
   } else if (
     rtype === "멀티탭 (3구)" ||
     rtype === "멀티탭 (5구)" ||
@@ -611,7 +591,6 @@ function getCategoryInfo(rtype) {
       types: multiArr
     };
   }
-  // 만약 어떤 것도 맞지 않으면 null
   return null;
 }
 
@@ -623,15 +602,12 @@ function getCategoryInfo(rtype) {
 async function checkDuplicateSameDay(rtype, dateStr, kakao_id, conn){
   const info = getCategoryInfo(rtype);
   if(!info) {
-    // 알 수 없는 유형 => false 처리 혹은 직접 에러 처리
     return false; 
   }
 
   const { table, column, types } = info;
-  // in절 구성
   const placeholders = types.map(() => "?").join(",");
 
-  // logs 테이블 JOIN → kakao_id + request_type='reserve'로 이미 예약된 내역 있는지
   const sql = `
     SELECT n.reserve_code
     FROM ${table} AS n
@@ -657,16 +633,42 @@ async function reserve(reqBody, res, room_type) {
   let conn;
   try {
     conn = await pool.getConnection();
-    await conn.beginTransaction();  // 트랜잭션 시작
+    await conn.beginTransaction();
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
-    const client_info    = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id       = reqBody.userRequest.user.id;
+
+    // 학생 정보 조회 (client_info 대신 students 테이블에서 조회)
+    const [studentRows] = await conn.execute(
+      "SELECT name, student_id, phone FROM students WHERE kakao_id = ?",
+      [kakao_id]
+    );
+    if (studentRows.length === 0) {
+      await conn.rollback();
+      console.log("[ERROR] Student info not found for kakao_id ->", kakao_id);
+      return res.send({
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "학생 정보가 존재하지 않습니다.",
+              "description": "등록된 학생 정보가 필요합니다.",
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
+            }
+          }]
+        }
+      });
+    }
+    const student_info = studentRows[0];
 
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
-    const start_db = start_time_str ;
+    const start_db = start_time_str;
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
@@ -773,7 +775,7 @@ async function reserve(reqBody, res, room_type) {
 
     // 예약코드 생성
     const reserve_code = await generateReserveCode(room_type, conn);
-    const hiddenName   = hideMiddleChar(client_info.name);
+    const hiddenName   = hideMiddleChar(student_info.name);
 
     // Insert
     await addToDatabase(
@@ -784,7 +786,7 @@ async function reserve(reqBody, res, room_type) {
       start_db,
       end_db,
       hiddenName,
-      client_info,
+      student_info,
       kakao_id,
       conn
     );
@@ -844,7 +846,7 @@ const itemMap = {
   ]
 };
 
-async function reserveItem(reqBody, res, category){
+async function reserveItem(reqBody, res, category) {
   console.log("[INFO] reserveItem() ->", category);
   let conn;
   try {
@@ -853,8 +855,34 @@ async function reserveItem(reqBody, res, category){
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
-    const client_info    = parseClientInfo(reqBody.action.params.client_info);
     const kakao_id       = reqBody.userRequest.user.id;
+
+    // 학생 정보 조회 (client_info 대신 students 테이블에서 조회)
+    const [studentRows] = await conn.execute(
+      "SELECT name, student_id, phone FROM students WHERE kakao_id = ?",
+      [kakao_id]
+    );
+    if (studentRows.length === 0) {
+      await conn.rollback();
+      console.log("[ERROR] Student info not found for kakao_id ->", kakao_id);
+      return res.send({
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "학생 정보가 존재하지 않습니다.",
+              "description": "등록된 학생 정보가 필요합니다.",
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
+            }
+          }]
+        }
+      });
+    }
+    const student_info = studentRows[0];
 
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
@@ -863,7 +891,6 @@ async function reserveItem(reqBody, res, category){
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
     // [추가] 같은 카테고리에 이미 예약이 있는지 체크
-    //      → "카테고리" 이름 자체를 getCategoryInfo에 전달
     const already = await checkDuplicateSameDay(category, dateStr, kakao_id, conn);
     if (already) {
       await conn.rollback();
@@ -881,24 +908,6 @@ async function reserveItem(reqBody, res, category){
         }
       });
     }
-
-    // 납부자 검사
-    // if(await isNotPayer(client_info.name, client_info.id, conn)){
-    //   await conn.rollback();
-    //   console.log("[WARN] Not a payer");
-    //   return res.send({
-    //     "version":"2.0",
-    //     "template":{
-    //       "outputs":[{
-    //         "textCard":{
-    //           "title":"학생회비 납부자가 아닙니다",
-    //           "description":`이름:${client_info.name}\n학번:${client_info.id}`,
-    //           "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
-    //         }
-    //       }]
-    //     }
-    //   });
-    // }
 
     if(!isAvailableTime()){
       await conn.rollback();
@@ -967,8 +976,8 @@ async function reserveItem(reqBody, res, category){
 
       // 빈 아이템이 있으면 그 아이템으로 예약
       if (overlapRows.length === 0) {
-        const code=await generateReserveCode("CHARGER", conn);
-        const hiddenName=hideMiddleChar(client_info.name);
+        const code = await generateReserveCode("CHARGER", conn);
+        const hiddenName = hideMiddleChar(student_info.name);
 
         // 사물함 비밀번호
         const locker_pwd = await getLockerPassword(itemName, conn);
@@ -981,7 +990,7 @@ async function reserveItem(reqBody, res, category){
           start_db,
           end_db,
           hiddenName,
-          client_info,
+          student_info,
           kakao_id,
           conn
         );
@@ -1008,10 +1017,9 @@ async function reserveItem(reqBody, res, category){
           }
         });
       }
-      // 겹치면 다음 itemName으로 넘어가서 빈 아이템 찾기
     }
 
-    // 여기까지 왔다면 모든 itemList가 예약 중
+    // 모든 itemList가 예약 중인 경우
     await conn.rollback();
     console.log("[WARN] All items used->", category);
     return res.send({
@@ -1050,13 +1058,12 @@ async function reserveCancel(reqBody, res) {
     const kakao_id = reqBody.userRequest.user.id;
     console.log("[DEBUG] code=", reserve_code, "kakao_id=", kakao_id);
 
-    // logs 테이블에서 해당 예약코드 확인
     const queryLogs = `SELECT * FROM logs WHERE reserve_code=? AND request_type='reserve'`;
     const [rows] = await conn.execute(queryLogs, [reserve_code]);
     if (!rows.length) {
       await conn.rollback();
       console.log("[FAILED] No matching code->", reserve_code);
-      const d=`다시 시도해주세요.`;
+      const d = `다시 시도해주세요.`;
       return res.send({
         "version":"2.0",
         "template":{
@@ -1072,10 +1079,10 @@ async function reserveCancel(reqBody, res) {
     }
 
     const logRow = rows[0];
-    if(logRow.kakao_id!==kakao_id){
+    if(logRow.kakao_id !== kakao_id){
       await conn.rollback();
       console.log("[FAILED] Another person's code->", reserve_code);
-      const d=`신청자의 카카오톡 계정으로 취소해주세요.`;
+      const d = `신청자의 카카오톡 계정으로 취소해주세요.`;
       return res.send({
         "version":"2.0",
         "template":{
@@ -1090,19 +1097,18 @@ async function reserveCancel(reqBody, res) {
       });
     }
 
-    // 코드 앞자리에 따라 테이블 결정
     let table;
     const c = reserve_code[0];
     if(["1","2","3","4"].includes(c)) {
-      table="new_media_library";
+      table = "new_media_library";
     } else if(["5","6"].includes(c)) {
-      table="glab";
+      table = "glab";
     } else if(["7"].includes(c)) {
-      table="charger";
+      table = "charger";
     } else {
       await conn.rollback();
       console.log("[FAILED] Unknown prefix->", c);
-      const d=`다시 시도해주세요.`;
+      const d = `다시 시도해주세요.`;
       return res.send({
         "version":"2.0",
         "template":{
@@ -1117,13 +1123,12 @@ async function reserveCancel(reqBody, res) {
       });
     }
 
-    // 실제 테이블에서 해당 예약코드 조회
-    const checkQ = `SELECT * FROM ${table} WHERE reserve_code=? FOR UPDATE`; 
+    const checkQ = `SELECT * FROM ${table} WHERE reserve_code=? FOR UPDATE`;
     const [checkRows] = await conn.execute(checkQ, [reserve_code]);
     if(!checkRows.length) {
       await conn.rollback();
       console.log("[FAILED] Already canceled->", reserve_code);
-      const d=`다시 시도해주세요.`;
+      const d = `다시 시도해주세요.`;
       return res.send({
         "version":"2.0",
         "template":{
@@ -1138,11 +1143,9 @@ async function reserveCancel(reqBody, res) {
       });
     }
 
-    // 취소(DELETE)
     const delQ = `DELETE FROM ${table} WHERE reserve_code=?`;
     await conn.execute(delQ, [reserve_code]);
 
-    // logs에 취소로그 추가
     const logQ = `
       INSERT INTO logs (reserve_code, room_type, request_type, name, student_id, phone, kakao_id)
       VALUES(?,?,?,?,?,?,?)
@@ -1160,11 +1163,11 @@ async function reserveCancel(reqBody, res) {
     await conn.commit();
 
     const origin = checkRows[0];
-    const st=origin.start_time.slice(0,5);
-    const et=origin.end_time.slice(0,5);
-    const time_string=`${st} - ${et}`;
-    const hiddenName=origin.masked_name;
-    const d=`- ${logRow.room_type}\n- 예약 번호: ${reserve_code}\n- 대여 시간: ${time_string}\n- 신청자: ${hiddenName}`;
+    const st = origin.start_time.slice(0,5);
+    const et = origin.end_time.slice(0,5);
+    const time_string = `${st} - ${et}`;
+    const hiddenName = origin.masked_name;
+    const d = `- ${logRow.room_type}\n- 예약 번호: ${reserve_code}\n- 대여 시간: ${time_string}\n- 신청자: ${hiddenName}`;
 
     res.send({
       "version":"2.0",
@@ -1180,7 +1183,7 @@ async function reserveCancel(reqBody, res) {
     });
     console.log("[SUCCESS] reserveCancel->", reserve_code);
 
-  } catch(err){
+  } catch(err) {
     console.error("[ERROR] reserveCancel:", err);
     if (conn) await conn.rollback();
     return res.send({ "status":"FAIL", "message":"예약 취소 중 오류" });
@@ -1198,16 +1201,16 @@ async function reserveStartTimeCheck(reqBody, res){
     const st = reqBody.value.origin.slice(0,5);
     const now = new Date();
     const curMin = now.getHours()*60 + now.getMinutes();
-    const [sh,sm] = st.split(":").map(Number);
+    const [sh, sm] = st.split(":").map(Number);
     const startMin = sh*60 + sm;
     const diff = startMin - curMin;
-    if(diff<30 && diff<0){
+    if(diff < 30 && diff < 0){
       console.log("[FAILED] Not available 30 min ago->", st);
       return res.send({ "status":"FAIL", "message":"30분 전 시간은 예약 불가" });
     }
     console.log("[SUCCESS] startTime->", st);
     res.send({ "status":"SUCCESS" });
-  } catch(e){
+  } catch(e) {
     console.error("[ERROR] reserveStartTimeCheck:", e);
     res.send({ "status":"FAIL", "message":"잘못된 요청" });
   }
@@ -1216,14 +1219,14 @@ async function reserveStartTimeCheck(reqBody, res){
 async function reserveClientInfoCheck(reqBody, res){
   console.log("[INFO] reserveClientInfoCheck");
   try {
-    const str=reqBody.value.origin;
-    const cleaned=str.replace(/[\s-]/g,'');
-    const parts=cleaned.split(',');
-    if(parts.length!==3){
+    const str = reqBody.value.origin;
+    const cleaned = str.replace(/[\s-]/g, '');
+    const parts = cleaned.split(',');
+    if(parts.length !== 3){
       console.log("[FAILED] Invalid client info->", str);
       return res.send({ "status":"FAIL", "message":"이름,학번,전화번호" });
     }
-    const [name,sid,pho]=parts;
+    const [name, sid, pho] = parts;
     if(!/^\d{8}$/.test(sid)){
       console.log("[FAILED] Invalid studentID->", sid);
       return res.send({ "status":"FAIL", "message":"학번은 8자리" });
@@ -1232,13 +1235,13 @@ async function reserveClientInfoCheck(reqBody, res){
       console.log("[FAILED] Invalid phone->", pho);
       return res.send({ "status":"FAIL", "message":"전화번호는 11자리" });
     }
-    if(!name||name.length<1){
+    if(!name || name.length < 1){
       console.log("[FAILED] Invalid name->", name);
       return res.send({ "status":"FAIL", "message":"이름을 입력" });
     }
-    console.log("[SUCCESS] clientInfo->", name,sid,pho);
+    console.log("[SUCCESS] clientInfo->", name, sid, pho);
     res.send({ "status":"SUCCESS" });
-  } catch(e){
+  } catch(e) {
     console.error("[ERROR] reserveClientInfoCheck:", e);
     res.send({ "status":"FAIL", "message":"잘못된 요청" });
   }
@@ -1255,8 +1258,8 @@ async function reserveCodeCheck(reqBody, res){
     }
 
     conn = await pool.getConnection();
-    const q=`SELECT * FROM logs WHERE reserve_code=?`;
-    const [rows]=await conn.execute(q,[code]);
+    const q = `SELECT * FROM logs WHERE reserve_code=?`;
+    const [rows] = await conn.execute(q, [code]);
     if(!rows.length){
       console.log("[FAILED] code not found->", code);
       return res.send({"status":"FAIL","message":"존재하지 않는 예약코드"});
@@ -1264,7 +1267,7 @@ async function reserveCodeCheck(reqBody, res){
     console.log("[SUCCESS] code->", code);
     res.send({"status":"SUCCESS"});
 
-  } catch(e){
+  } catch(e) {
     console.error("[ERROR] reserveCodeCheck:", e);
     res.send({"status":"FAIL","message":"잘못된 요청"});
   } finally {
@@ -1278,7 +1281,7 @@ async function reserveCodeCheck(reqBody, res){
 async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName, client_info, kakao_id, conn){
   console.log("[INFO] addToDatabase->", table, code);
 
-  const insertQ=`
+  const insertQ = `
     INSERT INTO ${table} (
       reserve_code, room_type, reserve_date,
       start_time, end_time, masked_name
@@ -1294,7 +1297,7 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
   ]);
 
   // logs
-  const logQ=`
+  const logQ = `
     INSERT INTO logs (
       reserve_code, room_type, request_type,
       name, student_id, phone, kakao_id
@@ -1305,19 +1308,16 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
     rtype,
     "reserve",
     client_info.name,
-    client_info.id,
+    client_info.student_id,
     client_info.phone,
     kakao_id
   ]);
 }
 
-async function addToDatabaseCharger(
-  table, code, itemName, rDate, stime, etime,
-  masked, info, kakao_id, conn
-){
+async function addToDatabaseCharger(table, code, itemName, rDate, stime, etime, masked, info, kakao_id, conn) {
   console.log("[INFO] addToDatabaseCharger->", itemName, code);
 
-  const insertQ=`
+  const insertQ = `
     INSERT INTO ${table} (
       reserve_code, charger_type, reserve_date,
       start_time, end_time, masked_name
@@ -1333,7 +1333,7 @@ async function addToDatabaseCharger(
   ]);
 
   // logs
-  const logQ=`
+  const logQ = `
     INSERT INTO logs (
       reserve_code, room_type, request_type,
       name, student_id, phone, kakao_id
@@ -1344,7 +1344,7 @@ async function addToDatabaseCharger(
     itemName,
     "reserve",
     info.name,
-    info.id,
+    info.student_id,
     info.phone,
     kakao_id
   ]);
@@ -1353,27 +1353,26 @@ async function addToDatabaseCharger(
 /***********************************************
  * (F) 코드 생성 (트랜잭션 인자)
  ***********************************************/
-async function generateReserveCode(rtype, conn){
+async function generateReserveCode(rtype, conn) {
   console.log("[INFO] generateReserveCode->", rtype);
   const room_codes = {
-    "01BLUE":"1","02GRAY":"2","03SILVER":"3","04GOLD":"4",
-    "GLAB1":"5","GLAB2":"6"
+    "01BLUE": "1", "02GRAY": "2", "03SILVER": "3", "04GOLD": "4",
+    "GLAB1": "5", "GLAB2": "6"
   };
-  const prefix = (rtype==="CHARGER") ? "7" : (room_codes[rtype]||"9");
+  const prefix = (rtype === "CHARGER") ? "7" : (room_codes[rtype] || "9");
 
-  const q=`
+  const q = `
     SELECT MAX(CAST(SUBSTRING(reserve_code,2) AS UNSIGNED)) AS max_id
     FROM logs
     WHERE reserve_code LIKE '${prefix}%'
       AND request_type='reserve'
     FOR UPDATE
   `;
-  // 같은 트랜잭션 안에서 FOR UPDATE로 잠금
   const [rows] = await conn.execute(q);
-  let maxID=rows[0].max_id;
-  if(!maxID) maxID=0;
-  const newID=maxID+1;
-  const code= prefix + String(newID).padStart(5,"0");
+  let maxID = rows[0].max_id;
+  if (!maxID) maxID = 0;
+  const newID = maxID + 1;
+  const code = prefix + String(newID).padStart(5, "0");
   console.log("[INFO] new code->", code);
   return code;
 }
@@ -1381,19 +1380,19 @@ async function generateReserveCode(rtype, conn){
 /***********************************************
  * (G) 납부자/사물함 비번
  ***********************************************/
-async function isNotPayer(name, id, conn){
+async function isNotPayer(name, id, conn) {
   console.log("[INFO] isNotPayer->", name, id);
-  const q=`SELECT * FROM payers WHERE student_id=? AND name=?`;
-  const [rows]=await conn.execute(q,[id,name]);
+  const q = `SELECT * FROM payers WHERE student_id=? AND name=?`;
+  const [rows] = await conn.execute(q, [id, name]);
   console.log("[DEBUG] payers found->", rows.length);
-  return rows.length===0;
+  return rows.length === 0;
 }
 
-async function getLockerPassword(ctype, conn){
+async function getLockerPassword(ctype, conn) {
   console.log("[INFO] getLockerPassword->", ctype);
-  const q=`SELECT password FROM charger_lockers WHERE charger_type=?`;
-  const [rows] = await conn.execute(q,[ctype]);
-  if(!rows.length){
+  const q = `SELECT password FROM charger_lockers WHERE charger_type=?`;
+  const [rows] = await conn.execute(q, [ctype]);
+  if (!rows.length) {
     console.log("[WARN] No locker found->", ctype);
     return "0000";
   }
@@ -1401,7 +1400,7 @@ async function getLockerPassword(ctype, conn){
 }
 
 /***********************************************
- * (X) 셀레니움, 크롤링 봇 차단 미들웨어
+ * (X) "하루 1회" 중복 체크 함수
  ***********************************************/
 app.use((req, res, next) => {
   const userAgent = req.headers['user-agent'] || '';
