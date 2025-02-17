@@ -337,6 +337,7 @@ function certify(reqBody, res) {
 // 인증 코드 검증 및 학생 정보 DB 저장 함수
 async function certifyCode(reqBody, res) {
   // 파라미터 파싱: code 값이 정수 형태의 문자열이 아니면 오류 응답 전송
+  console.log(reqBody);
   const codeStr = JSON.parse(reqBody.action.params.code).value;
   if (!/^\d+$/.test(codeStr)) {
     return res.send({
