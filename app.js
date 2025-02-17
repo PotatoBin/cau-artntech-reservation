@@ -420,7 +420,7 @@ async function certifyCode(reqBody, res) {
 
   } catch (error) {
     // 4-C) 요청 자체가 실패했거나, 4xx / 5xx 에러인 경우
-    console.error("[ERROR] certifyCode UnivCert API:", error.response?.data || error.message);
+    console.error("[ERROR] certifyCode UnivCert API:", error.message);
 
     return res.send({
       "version":"2.0",
@@ -428,7 +428,7 @@ async function certifyCode(reqBody, res) {
         "outputs":[{
           "textCard":{
             "title":"인증에 실패하였습니다.",
-            "description": (error.response?.data?.message) || "다시 시도해주세요.",
+            "description": "다시 시도해주세요.",
             "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
           }
         }]
