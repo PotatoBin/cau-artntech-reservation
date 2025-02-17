@@ -344,6 +344,25 @@ async function certifyCode(reqBody, res) {
   const kakao_id   = reqBody.userRequest.user.id;
 
   console.log("[DEBUG] certifyCode parameters:", { code, email, clientInfo, kakao_id });
+  // 4자리 정수 형식 검사
+  if (!(Number.isInteger(code) && code >= 1000 && code <= 9999)) {
+    return res.send({
+      "version": "2.0",
+      "template": {
+        "outputs": [{
+          "textCard": {
+            "title": "올바르지 않은 인증 코드 형식입니다.",
+            "description": "다시 시도해주세요.",
+            "buttons": [{
+              "label": "처음으로",
+              "action": "block",
+              "messageText": "처음으로"
+            }]
+          }
+        }]
+      }
+    });
+  }
 
   // UnivCert API에 POST할 payload 준비
   const payload = {
