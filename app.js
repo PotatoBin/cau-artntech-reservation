@@ -303,10 +303,10 @@ function isAvailableTime() {
   const now = new Date();
   const day = now.getDay(); // 0:일 ~ 6:토
   const hour = now.getHours();
-  if (day === 0 || day === 6) {
-    console.log("[WARN] Weekend");
-    return false;
-  }
+  //if (day === 0 || day === 6) {
+  //  console.log("[WARN] Weekend");
+  //  return false;
+  //}
   if (hour < 9 || hour >= 22) {
     console.log("[WARN] Out of hours");
     return false;
@@ -668,22 +668,22 @@ async function reserveItem(reqBody, res, category){
     }
 
     // 납부자 검사
-    if(await isNotPayer(client_info.name, client_info.id, conn)){
-      await conn.rollback();
-      console.log("[WARN] Not a payer");
-      return res.send({
-        "version":"2.0",
-        "template":{
-          "outputs":[{
-            "textCard":{
-              "title":"학생회비 납부자가 아닙니다",
-              "description":`이름:${client_info.name}\n학번:${client_info.id}`,
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
-            }
-          }]
-        }
-      });
-    }
+    // if(await isNotPayer(client_info.name, client_info.id, conn)){
+    //   await conn.rollback();
+    //   console.log("[WARN] Not a payer");
+    //   return res.send({
+    //     "version":"2.0",
+    //     "template":{
+    //       "outputs":[{
+    //         "textCard":{
+    //           "title":"학생회비 납부자가 아닙니다",
+    //           "description":`이름:${client_info.name}\n학번:${client_info.id}`,
+    //           "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+    //         }
+    //       }]
+    //     }
+    //   });
+    // }
 
     if(!isAvailableTime()){
       await conn.rollback();
