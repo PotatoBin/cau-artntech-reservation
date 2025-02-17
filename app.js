@@ -338,12 +338,6 @@ function certify(reqBody, res) {
 async function certifyCode(reqBody, res) {
   // 파라미터 파싱
   const codeStr    = JSON.parse(reqBody.action.params.code).value;  // 문자열
-  const code       = parseInt(codeStr, 10);                         // 정수 변환
-  const email      = JSON.parse(reqBody.action.params.email).value;
-  const clientInfo = parseClientInfo(reqBody.action.params.client_info);
-  const kakao_id   = reqBody.userRequest.user.id;
-
-  console.log("[DEBUG] certifyCode parameters:", { code, email, clientInfo, kakao_id });
   // 4자리 정수 형식 검사
   if (!(Number.isInteger(code) && code >= 1000 && code <= 9999)) {
     return res.send({
@@ -363,6 +357,14 @@ async function certifyCode(reqBody, res) {
       }
     });
   }
+  
+  const code       = parseInt(codeStr, 10);                         // 정수 변환
+  const email      = JSON.parse(reqBody.action.params.email).value;
+  const clientInfo = parseClientInfo(reqBody.action.params.client_info);
+  const kakao_id   = reqBody.userRequest.user.id;
+
+  console.log("[DEBUG] certifyCode parameters:", { code, email, clientInfo, kakao_id });
+  
 
   // UnivCert API에 POST할 payload 준비
   const payload = {
