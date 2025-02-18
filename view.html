@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>중앙대학교 예술공학대학 대여시스템</title>
+  <meta name="description" content="New Media Library / GLAB / 충전기 / HDMI / 멀티탭">
+  <meta name="keywords" content="중앙대학교, 예술공학대학, 대여, 예약, 학생회">
+  <meta property="og:title" content="중앙대학교 예술공학대학 대여시스템">
+  <meta property="og:description" content="New Media Library / GLAB / 충전기 / HDMI / 멀티탭">
+  <meta property="og:image" content="img/logo.jpg">
+  <meta property="og:url" content="https://cauartntech.com/view">
+
   <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
 
   <!-- Google Fonts: Noto Sans KR -->
@@ -61,15 +69,11 @@
       margin: 5px 0;
       line-height: 1.7;
       outline: none;
-      /* 원하는 경우 box-shadow 가능
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      */
     }
     summary {
       font-size: 1.1em;
       cursor: pointer;
       font-weight: 300;
-      /* 요약 글자를 버튼처럼 보이도록 */
       padding: 12px 15px;
       margin: 0;
       background-color: #3a3a3a;
@@ -184,85 +188,90 @@
   </style>
 </head>
 <body class="noto-sans-kr-regular">
-  <div class="container">
-    <header>
+  <header>
+    <div class="container">
       <h1>중앙대학교 예술공학대학 대여시스템</h1>
       <h2>Chung-Ang Univ. Art & Technology Reservation System</h2>
-    </header>
-    
-    <!-- 예시 1: 사용 안내 및 준수 사항 -->
-    <details>
-      <summary>사용 안내 및 준수 사항</summary>
-      <div class="collapsible-content">
-        <p>1. 예술공학대학 재학생의 학습목적으로만 사용을 제한합니다.</p>
-        <p>2. 목적 이외의 사용 시 임의로 취소될 수 있으며, 학칙 및 규정에 따른 불이익을 받을 수 있습니다.</p>
-        <p>3. 오전 9시부터 오후 22시까지 인당 최대 4시간 대여할 수 있습니다.</p>
-        <p>4. 주말 사용은 사전에 별도 신청서를 교학지원팀에 제출하여야 합니다.</p>
-        <p>5. 사용 허가 사항 이외의 전기기구·전열기 등의 사용을 금지합니다.</p>
-        <p>6. 화재 및 기타 안전사고에 각별히 유의하시고, 사용 후 정리 및 청소를 해주시기 바랍니다.</p>
-        <p>7. 임의 기숙, 음식물 반입 및 음주 행위를 금지하며, 정숙 부탁드립니다.</p>
-        <p>8. 관리부서와 근무자의 안내에 적극 협조하여 주시기 바랍니다.</p>
-        <p>9. 사용자의 부주의로 인한 시설물의 손상 또는 기자재의 분실에 대해서는 사용자가 즉시 복구·변상해야 합니다.</p>
-        <p>10. 사용자의 부주의·준수사항 불이행으로 인한 사고나 피해에 대해서는 학생회와 학교(관리부서)가 책임지지 않습니다.</p>
-        <p>11. 본 시스템은 교학지원팀으로부터 일부 시설에 대한 대여 관리를 위임 받아 학생회에서 임시로 운영 중입니다.</p>
-      </div>
-    </details>
-    
-    <!-- 예시 2: 대여 시스템 사용 방법 -->
-    <details>
-      <summary>대여 시스템 사용 방법</summary>
-      <div class="collapsible-content">
-        <p>1. 학생회 카카오톡 채널 친구 추가 
-          <a class="kakao-button" href="https://pf.kakao.com/_TzxirG" target="_blank" rel="noopener noreferrer">카카오톡 링크</a>
-        </p>
-        <p>2. 채팅 메뉴를 이용하여 챗봇 이용</p>
-        <p>3. 예약 번호를 확인하고 규칙에 맞게 공간 사용</p>
-      </div>
-    </details>
-    
-    <!-- 예시 3: 개인정보 수집 및 이용 동의 -->
-    <details>
-      <summary>개인정보 수집 및 이용 동의</summary>
-      <div class="collapsible-content">
-        <p>수집 목적: 본교 재학생 신원 확인 및 대여 신청 진행</p>
-        <p>수집 항목: 성명, 학과(전공), 학번, 전화번호</p>
-        <p>보유 및 이용 기간: 1년(수집 목적 달성 시 폐기)</p>
-        <p>정보 주체는 개인 정보 수집을 거부할 권리가 있으며, 동의 거부 시 시설물 사용 신청이 불가합니다.</p>
-      </div>
-    </details>
-    
-    <!-- 버튼들 -->
-    <a href="https://cauartntech.com/view/newmedialibrary" class="button">
-      <div class="img-container">
-        <img src="img/1.jpg" alt="New Media Library">
-      </div>
-      <div class="text-container">
-        <h2>New Media Library</h2>
-        <small>810관 8617호 (과방)</small>
-      </div>
-    </a>
-    
-    <a href="https://cauartntech.com/view/glab" class="button">
-      <div class="img-container">
-        <img src="img/2.jpg" alt="GLAB">
-      </div>
-      <div class="text-container">
-        <h2>GLAB</h2>
-        <small>810관 8712호</small>
-      </div>
-    </a>
-    
-    <a href="https://cauartntech.com/view/charger" class="button">
-      <div class="img-container">
-        <img src="img/3.jpg" alt="기타 물품">
-      </div>
-      <div class="text-container">
-        <h2>기타 물품</h2>
-        <small>810관 6층 사물함 (학생회비 납부자 전용)</small>
-      </div>
-    </a>
-    
-    <div class="footer">
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <details>
+        <summary>사용 안내 및 준수 사항</summary>
+        <div class="collapsible-content">
+          <p>1. 예술공학대학 재학생의 학습목적으로만 사용을 제한합니다.</p>
+          <p>2. 목적 이외의 사용 시 임의로 취소될 수 있으며, 학칙 및 규정에 따른 불이익을 받을 수 있습니다.</p>
+          <p>3. 오전 9시부터 오후 22시까지 인당 최대 4시간 대여할 수 있습니다.</p>
+          <p>4. 주말 사용은 사전에 별도 신청서를 교학지원팀에 제출하여야 합니다.</p>
+          <p>5. 사용 허가 사항 이외의 전기기구·전열기 등의 사용을 금지합니다.</p>
+          <p>6. 화재 및 기타 안전사고에 각별히 유의하시고, 사용 후 정리 및 청소를 해주시기 바랍니다.</p>
+          <p>7. 임의 기숙, 음식물 반입 및 음주 행위를 금지하며, 정숙 부탁드립니다.</p>
+          <p>8. 관리부서와 근무자의 안내에 적극 협조하여 주시기 바랍니다.</p>
+          <p>9. 사용자의 부주의로 인한 시설물의 손상 또는 기자재의 분실에 대해서는 사용자가 즉시 복구·변상해야 합니다.</p>
+          <p>10. 사용자의 부주의·준수사항 불이행으로 인한 사고나 피해에 대해서는 학생회와 학교(관리부서)가 책임지지 않습니다.</p>
+          <p>11. 본 시스템은 교학지원팀으로부터 일부 시설에 대한 대여 관리를 위임 받아 학생회에서 임시로 운영 중입니다.</p>
+        </div>
+      </details>
+      
+      <details>
+        <summary>대여 시스템 사용 방법</summary>
+        <div class="collapsible-content">
+          <p>
+            1. 학생회 카카오톡 채널 친구 추가 
+            <a class="kakao-button" href="https://pf.kakao.com/_TzxirG" target="_blank" rel="noopener noreferrer">
+              카카오톡 링크
+            </a>
+          </p>
+          <p>2. 채팅 메뉴를 이용하여 챗봇 이용</p>
+          <p>3. 예약 번호를 확인하고 규칙에 맞게 공간 사용</p>
+        </div>
+      </details>
+      
+      <details>
+        <summary>개인정보 수집 및 이용 동의</summary>
+        <div class="collapsible-content">
+          <p>수집 목적: 본교 재학생 신원 확인 및 대여 신청 진행</p>
+          <p>수집 항목: 성명, 학과(전공), 학번, 전화번호</p>
+          <p>보유 및 이용 기간: 1년(수집 목적 달성 시 폐기)</p>
+          <p>정보 주체는 개인 정보 수집을 거부할 권리가 있으며, 동의 거부 시 시설물 사용 신청이 불가합니다.</p>
+        </div>
+      </details>
+      
+      <a href="https://cauartntech.com/view/newmedialibrary" class="button">
+        <div class="img-container">
+          <img src="img/1.jpg" alt="New Media Library" loading="lazy">
+        </div>
+        <div class="text-container">
+          <h2>New Media Library</h2>
+          <small>810관 8617호 (과방)</small>
+        </div>
+      </a>
+      
+      <a href="https://cauartntech.com/view/glab" class="button">
+        <div class="img-container">
+          <img src="img/2.jpg" alt="GLAB" loading="lazy">
+        </div>
+        <div class="text-container">
+          <h2>GLAB</h2>
+          <small>810관 8712호</small>
+        </div>
+      </a>
+      
+      <a href="https://cauartntech.com/view/charger" class="button">
+        <div class="img-container">
+          <img src="img/3.jpg" alt="기타 물품" loading="lazy">
+        </div>
+        <div class="text-container">
+          <h2>기타 물품</h2>
+          <small>810관 6층 사물함 (학생회비 납부자 전용)</small>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
       <hr>
       <p>
         ©중앙대학교 예술공학대학 학생회 | 
@@ -275,7 +284,7 @@
         </a>
       </p>
     </div>
-  </div>
+  </footer>
 
   <!-- 접힘/펼침 애니메이션 스크립트 -->
   <script>
@@ -284,7 +293,7 @@
       const summary = detail.querySelector('summary');
       const content = detail.querySelector('.collapsible-content');
 
-      // 혹시 기본 화살표 표시 숨기고 싶다면:
+      // 화살표 표시를 숨기려면
       summary.style.listStyle = 'none';
       summary.style.webkitAppearance = 'none';
       summary.style.MozAppearance = 'none';
@@ -298,7 +307,7 @@
 
       // summary 클릭 시
       summary.addEventListener('click', (e) => {
-        e.preventDefault(); // 기본 접힘/펼침 막기
+        e.preventDefault(); // 기본 접힘/펼침 동작 막기
 
         if (detail.hasAttribute('open')) {
           // 닫기 애니메이션
