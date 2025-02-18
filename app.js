@@ -1259,8 +1259,8 @@ async function reserveClientInfoCheck(reqBody, res) {
     }
     console.log("[SUCCESS] clientInfo->", name, sid, pho);
 
-    // 카카오 아이디와 학생 정보 중복 체크
-    const kakao_id = reqBody.userRequest.user.id;
+    const kakao_id = reqBody.user.id;
+
     const [rows] = await pool.execute(
       "SELECT * FROM students WHERE kakao_id = ? OR (name = ? AND student_id = ? AND phone = ?)",
       [kakao_id, name, sid, pho]
@@ -1276,6 +1276,7 @@ async function reserveClientInfoCheck(reqBody, res) {
     res.send({ "status": "FAIL", "message": "잘못된 요청" });
   }
 }
+
 
 
 async function reserveCodeCheck(reqBody, res){
