@@ -14,7 +14,19 @@ const axios = require("axios");
 app.use(compression());
 
 /***********************************************
- * 0) View 설정
+ * Anti-bot 미들웨어 (최상단에 배치)
+ ***********************************************/
+app.use((req, res, next) => {
+  const userAgent = req.headers['user-agent'] || '';
+  if (/selenium|headlesschrome|phantomjs|puppeteer|python-requests|bot|spider|crawl/i.test(userAgent)) {
+    console.log(`[WARN] Blocked crawler/bot -> User-Agent: ${userAgent}`);
+    return res.status(403).send('Forbidden');
+  }
+  next();
+});
+
+/***********************************************
+ * 정적 파일, View 설정
  ***********************************************/
 app.use("/img", express.static(path.join(__dirname, "img")));
 app.use(express.static(path.join(__dirname, "public")));
@@ -31,11 +43,11 @@ app.get("/view", (req, res) => {
 });
 
 /***********************************************
- * 0-1) 예시: 예약 현황 조회 라우트
+ * 예시: 예약 현황 조회 라우트
  ***********************************************/
 function getTodayKST() {
   const now = new Date();
-  // KST 보정
+  // KST 보정 (웹사이트에만 적용)
   now.setHours(now.getHours() + 9);
   return now.toISOString().split('T')[0]; // "YYYY-MM-DD"
 }
@@ -114,7 +126,6 @@ app.get("/view/charger", async (req, res) => {
   try {
     const today = getTodayKST();
 
-    // 1) DB에서 예약 정보 가져오기 (이미 'ORDER BY start_time ASC' 포함)
     const [rows] = await pool.execute(
       `SELECT reserve_code, charger_type, start_time, end_time, masked_name
        FROM charger
@@ -123,8 +134,6 @@ app.get("/view/charger", async (req, res) => {
       [today]
     );
 
-    // 2) 전체 “카테고리->항목” 구조를 미리 선언
-    //    (예약 여부와 무관하게, 모든 항목을 표시하기 위해)
     const allChargers = {
       "노트북 충전기 (C-Type 65W)": [
         "노트북 충전기 (C-Type 65W) 1",
@@ -152,8 +161,6 @@ app.get("/view/charger", async (req, res) => {
       ]
     };
 
-    // 3) 우리가 UI에서 쓰는 “카테고리 이름”과
-    //    DB상 charger_type(세부항목) 간의 매핑
     const categoryMapping = {
       "노트북 충전기 (C-Type 65W) 1": "노트북 충전기 (C-Type 65W)",
       "노트북 충전기 (C-Type 65W) 2": "노트북 충전기 (C-Type 65W)",
@@ -169,7 +176,6 @@ app.get("/view/charger", async (req, res) => {
       "멀티탭 (5구)": "멀티탭 (5구)"
     };
 
-    // 4) 실제 EJS 렌더링에 넘길 reservations 객체 초기화
     const reservations = {};
     for (const categoryName in allChargers) {
       reservations[categoryName] = {};
@@ -178,7 +184,6 @@ app.get("/view/charger", async (req, res) => {
       });
     }
 
-    // 5) DB에서 가져온 rows를 순회하며, 해당 카테고리/항목에 push
     rows.forEach(row => {
       const itemName = row.charger_type; 
       const category = categoryMapping[itemName];
@@ -191,7 +196,6 @@ app.get("/view/charger", async (req, res) => {
       }
     });
 
-    // 6) reservations에 예약이 없는 항목도 빈 배열이 들어 있음
     res.render("charger", { reservations, today });
   } catch (err) {
     console.error(err);
@@ -200,7 +204,7 @@ app.get("/view/charger", async (req, res) => {
 });
 
 /***********************************************
- * 1) Morgan 로그 설정 (KST)
+ * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
  ***********************************************/
 morgan.token("date-kst", () => {
   const now = new Date();
@@ -219,7 +223,7 @@ morgan.format(
 );
 
 /***********************************************
- * 2) MySQL Pool
+ * MySQL Pool
  ***********************************************/
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -232,14 +236,16 @@ const pool = mysql.createPool({
 });
 
 /***********************************************
- * 3) Express + Router
+ * Express 미들웨어 및 Router 설정
  ***********************************************/
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan("combined-kst"));
 app.use("/reserve", router);
 
-// Health check
+/***********************************************
+ * Health check
+ ***********************************************/
 router.head("/wakeup", (req, res) => {
   console.log("[INFO] wakeup endpoint called");
   res.status(200).send();
@@ -281,14 +287,12 @@ router.post("/certify", (req, res) => certify(req.body, res));
 router.post("/certifycode", (req, res) => certifyCode(req.body, res));
 
 /***********************************************
- 재학생 인증
+ * 재학생 인증
  ***********************************************/
-// 재학생 인증 요청 처리 함수
 function certify(reqBody, res) {
   const email = reqBody.value.origin;
   console.log("[DEBUG] Received email for certification:", email);
 
-  // 중앙대 이메일 형식 검사
   if (!/^[^@]+@cau\.ac\.kr$/i.test(email)) {
     console.log("[DEBUG] 이메일 형식 검사 실패:", email);
     return res.send({
@@ -297,9 +301,8 @@ function certify(reqBody, res) {
     });
   }
 
-  // UnivCert API에 POST 요청을 위한 payload 준비
   const payload = {
-    key: process.env.UNIVCERT,  // .env 파일에 UNIVCERT로 저장된 API 키
+    key: process.env.UNIVCERT,
     email: email,
     univName: "중앙대학교",
     univ_check: true
@@ -308,11 +311,6 @@ function certify(reqBody, res) {
 
   axios.post("https://univcert.com/api/v1/certify", payload)
     .then((response) => {
-      /*
-        [공식 문서 예시 응답]
-        - 성공 시 : { "success": true }
-        - 실패 시 : { "status": 400, "success": false, "message": ... }
-      */
       const data = response.data;
       console.log("[DEBUG] Response from UnivCert API:", data);
       if (data.success === true) {
@@ -335,10 +333,8 @@ function certify(reqBody, res) {
     });
 }
 
-// 인증 코드 검증 및 학생 정보 DB 저장 함수
 async function certifyCode(reqBody, res) {
   console.log(reqBody);
-  // 파라미터 파싱: code 값이 문자열로 전달되고, 숫자로만 이루어져 있지 않으면 오류 응답 전송
   const codeStr = reqBody.action.params.code;
   console.log(codeStr);
   if (!/^\d+$/.test(codeStr)) {
@@ -359,26 +355,23 @@ async function certifyCode(reqBody, res) {
       }
     });
   }
-  // 숫자로만 구성된 문자열을 정수형으로 변환
   const code = parseInt(codeStr, 10);
   
-  // 개별 파라미터 변경: client_info 대신 개별 필드 사용
   const email         = reqBody.action.params.email;
   const client_name   = reqBody.action.params.client_name;
   const client_id     = reqBody.action.params.client_id;
   const client_phone  = reqBody.action.params.client_phone;
+  // 예약 관련 함수들은 req.userRequest.user.id를 사용
   const kakao_id      = reqBody.userRequest.user.id;
   
   console.log("[DEBUG] certifyCode parameters:", { code, email, client_name, client_id, client_phone, kakao_id });
   
-  // 재학생 정보 검증: student_master 테이블에서 client_id, client_phone, email 중 하나라도 일치하는 레코드가 있는지 조회
   const [rows] = await pool.execute(
     "SELECT * FROM student_master WHERE student_id = ? OR phone = ? OR email = ?",
     [client_id, client_phone, email]
   );
   
   if (rows.length > 0) {
-    // 찾은 레코드들 중 하나라도 전체 정보(이름, 학번, 전화번호, 이메일)가 완벽하게 일치하는지 확인
     let fullyMatched = false;
     for (const record of rows) {
       if (
@@ -414,26 +407,22 @@ async function certifyCode(reqBody, res) {
       });
     }
   }
-  // student_master에 아무런 레코드가 없으면, 재학생 정보가 수집되지 않은 것으로 보고 그대로 진행
   
-  // UnivCert API에 POST할 payload 준비
   const payload = {
-    key: process.env.UNIVCERT,  // .env에 저장된 "UNIVCERT" 키
-    email: email,               // 인증대상 이메일
-    univName: "중앙대학교",      // 중앙대라고 명시
-    code: code                  // 사용자 입력 인증코드 (정수형)
+    key: process.env.UNIVCERT,
+    email: email,
+    univName: "중앙대학교",
+    code: code
   };
   
   console.log("[DEBUG] Payload for certifyCode UnivCert API:", payload);
   
   try {
-    // UnivCert 인증코드 확인 요청
     const response = await axios.post("https://univcert.com/api/v1/certifycode", payload);
     const data = response.data;
     console.log("[DEBUG] Response from certifyCode UnivCert API:", data);
     
     if (data.success === true) {
-      // 인증 성공 시, students 테이블에 INSERT (여기서는 이미 인증된 학생 정보를 기록)
       let conn;
       try {
         conn = await pool.getConnection();
@@ -454,7 +443,6 @@ async function certifyCode(reqBody, res) {
         console.log("[DEBUG] Inserted student data for certification");
         conn.release();
         
-        // 인증 성공 후, 카카오 챗봇 응답
         return res.send({
           "version": "2.0",
           "template": {
@@ -531,7 +519,6 @@ async function certifyCode(reqBody, res) {
   }
 }
 
-
 /***********************************************
  * Helper 함수들
  ***********************************************/
@@ -546,7 +533,6 @@ function hideMiddleChar(str) {
   return str[0] + "*".repeat(str.length - 2) + str[str.length - 1];
 }
 
-// 30분 미만 or 4시간 초과시 잘못된 시간
 function isWrongHours(st, et) {
   const [sh, sm] = st.split(":").map(Number);
   const [eh, em] = et.split(":").map(Number);
@@ -554,15 +540,14 @@ function isWrongHours(st, et) {
   return diff < 30 || diff > 240;
 }
 
-// 평일(월~금) 9시~22시만 가능
 function isAvailableTime() {
   const now = new Date();
-  const day = now.getDay(); // 0:일 ~ 6:토
+  const day = now.getDay();
   const hour = now.getHours();
-  //if (day === 0 || day === 6) {
-  //  console.log("[WARN] Weekend");
-  //  return false;
-  //}
+  // if (day === 0 || day === 6) {
+  //   console.log("[WARN] Weekend");
+  //   return false;
+  // }
   if (hour < 9 || hour >= 22) {
     console.log("[WARN] Out of hours");
     return false;
@@ -572,23 +557,15 @@ function isAvailableTime() {
 }
 
 /***********************************************
- * (X) "하루 1회" 중복 체크 함수
+ * "하루 1회" 중복 체크 함수
  ***********************************************/
 function getCategoryInfo(rtype) {
-  // New Media Library
   const newMediaArr = ["01BLUE","02GRAY","03SILVER","04GOLD"];
-  // GLAB
   const glabArr     = ["GLAB1","GLAB2"];
-
-  // 노트북 충전기
   const laptopArr   = ["노트북 충전기 (C-Type 65W) 1","노트북 충전기 (C-Type 65W) 2"];
-  // 스마트폰 충전기
   const phoneCArr   = ["스마트폰 충전기 (C-Type) 1","스마트폰 충전기 (C-Type) 2","스마트폰 충전기 (C-Type) 3"];
-  // 아이폰 충전기
   const iphoneArr   = ["아이폰 충전기 (8pin) 1","아이폰 충전기 (8pin) 2","아이폰 충전기 (8pin) 3"];
-  // HDMI
   const hdmiArr     = ["HDMI 케이블 1","HDMI 케이블 2"];
-  // 멀티탭 (3구 / 5구)
   const multiArr    = ["멀티탭 (3구)","멀티탭 (5구)"];
 
   if (newMediaArr.includes(rtype)) {
@@ -641,11 +618,6 @@ function getCategoryInfo(rtype) {
   return null;
 }
 
-/**
- * "하루에 한 번" 제한 로직:
- *   - 당일에, 동일 카테고리(types 배열)에 속하는 room_type/charger_type 중
- *     이미 kakao_id로 예약(request_type='reserve')가 있으면 true
- */
 async function checkDuplicateSameDay(rtype, dateStr, kakao_id, conn){
   const info = getCategoryInfo(rtype);
   if(!info) {
@@ -684,9 +656,9 @@ async function reserve(reqBody, res, room_type) {
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
+    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id       = reqBody.userRequest.user.id;
 
-    // 학생 정보 조회 (client_info 대신 students 테이블에서 조회)
     const [studentRows] = await conn.execute(
       "SELECT name, student_id, phone FROM students WHERE kakao_id = ?",
       [kakao_id]
@@ -719,7 +691,6 @@ async function reserve(reqBody, res, room_type) {
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
-    // [추가] 같은 카테고리에 이미 예약이 있는지 체크
     const already = await checkDuplicateSameDay(room_type, dateStr, kakao_id, conn);
     if (already) {
       await conn.rollback();
@@ -738,7 +709,6 @@ async function reserve(reqBody, res, room_type) {
       });
     }
 
-    // 어떤 테이블에 Insert할지
     let table;
     if (["01BLUE","02GRAY","03SILVER","04GOLD"].includes(room_type)) {
       table = "new_media_library";
@@ -753,7 +723,6 @@ async function reserve(reqBody, res, room_type) {
       });
     }
 
-    // 예약 시간/조건 검증
     if (!isAvailableTime()) {
       await conn.rollback();
       console.log("[WARN] not available time");
@@ -787,7 +756,6 @@ async function reserve(reqBody, res, room_type) {
       });
     }
 
-    // 동시성 방지: 중복(SELECT ... FOR UPDATE)
     const col = "room_type";
     const overlapSql = `
       SELECT id
@@ -820,11 +788,9 @@ async function reserve(reqBody, res, room_type) {
       });
     }
 
-    // 예약코드 생성
     const reserve_code = await generateReserveCode(room_type, conn);
     const hiddenName   = hideMiddleChar(student_info.name);
 
-    // Insert
     await addToDatabase(
       table,
       reserve_code,
@@ -838,7 +804,6 @@ async function reserve(reqBody, res, room_type) {
       conn
     );
 
-    // 커밋
     await conn.commit();
     console.log("[SUCCESS] Reserved->", reserve_code);
 
@@ -902,9 +867,9 @@ async function reserveItem(reqBody, res, category) {
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
+    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id       = reqBody.userRequest.user.id;
 
-    // 학생 정보 조회 (client_info 대신 students 테이블에서 조회)
     const [studentRows] = await conn.execute(
       "SELECT name, student_id, phone FROM students WHERE kakao_id = ?",
       [kakao_id]
@@ -937,7 +902,6 @@ async function reserveItem(reqBody, res, category) {
     const end_db   = end_time_str;
     const displayTime = `${start_time_str.slice(0,5)} - ${end_time_str.slice(0,5)}`;
 
-    // [추가] 같은 카테고리에 이미 예약이 있는지 체크
     const already = await checkDuplicateSameDay(category, dateStr, kakao_id, conn);
     if (already) {
       await conn.rollback();
@@ -956,8 +920,7 @@ async function reserveItem(reqBody, res, category) {
       });
     }
 
-    // 납부자 검사
-    if(await isNotPayer(client_info.name, client_info.id, conn)){
+    if(await isNotPayer(student_info.name, student_info.id, conn)){
       await conn.rollback();
       console.log("[WARN] Not a payer");
       return res.send({
@@ -966,7 +929,7 @@ async function reserveItem(reqBody, res, category) {
           "outputs":[{
             "textCard":{
               "title":"학생회비 납부자가 아닙니다",
-              "description":`이름:${client_info.name}\n학번:${client_info.id}`,
+              "description":`이름:${student_info.name}\n학번:${student_info.id}`,
               "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
           }]
@@ -1023,7 +986,6 @@ async function reserveItem(reqBody, res, category) {
       });
     }
 
-    // itemList 순회하며, 각 아이템에 대해 중복(SELECT ... FOR UPDATE) 체크
     for(const itemName of itemList){
       const overlapSql = `
         SELECT id
@@ -1039,12 +1001,10 @@ async function reserveItem(reqBody, res, category) {
         dateStr, itemName, end_db, start_db
       ]);
 
-      // 빈 아이템이 있으면 그 아이템으로 예약
       if (overlapRows.length === 0) {
         const code = await generateReserveCode("CHARGER", conn);
         const hiddenName = hideMiddleChar(student_info.name);
 
-        // 사물함 비밀번호
         const locker_pwd = await getLockerPassword(itemName, conn);
 
         await addToDatabaseCharger(
@@ -1084,7 +1044,6 @@ async function reserveItem(reqBody, res, category) {
       }
     }
 
-    // 모든 itemList가 예약 중인 경우
     await conn.rollback();
     console.log("[WARN] All items used->", category);
     return res.send({
@@ -1120,6 +1079,7 @@ async function reserveCancel(reqBody, res) {
     await conn.beginTransaction();
 
     const reserve_code = reqBody.action.params.reserve_code;
+    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id = reqBody.userRequest.user.id;
     console.log("[DEBUG] code=", reserve_code, "kakao_id=", kakao_id);
 
@@ -1269,9 +1229,9 @@ async function reserveStartTimeCheck(reqBody, res){
     const [sh, sm] = st.split(":").map(Number);
     const startMin = sh*60 + sm;
     const diff = startMin - curMin;
-    if(diff < 30 && diff < 0){
-      console.log("[FAILED] Not available 30 min ago->", st);
-      return res.send({ "status":"FAIL", "message":"30분 전 시간은 예약 불가" });
+    if(diff < 30){
+      console.log("[FAILED] Not available: 예약 시작 시간이 현재 시각으로부터 30분 미만 ->", st);
+      return res.send({ "status":"FAIL", "message":"예약 시작 시간은 현재 시각으로부터 최소 30분 이후여야 합니다." });
     }
     console.log("[SUCCESS] startTime->", st);
     res.send({ "status":"SUCCESS" });
@@ -1284,11 +1244,10 @@ async function reserveStartTimeCheck(reqBody, res){
 async function checkClientName(reqBody, res) {
   console.log("[INFO] checkClientName", reqBody);
   try {
-    // 요청 본문에서 이름을 추출 (공백 제거)
     const name = reqBody.value.origin.trim();
-    const kakao_id = reqBody.user.id;
+    // checkClientName는 req.user.id 사용 (원래대로)
+    const kakao_id = req.user.id;
     
-    // 이미 인증된 카카오 아이디가 있는지 체크
     const [rows] = await pool.execute("SELECT * FROM students WHERE kakao_id = ?", [kakao_id]);
     if (rows.length > 0) {
       console.log("[FAILED] 이미 등록된 카카오 아이디:", kakao_id);
@@ -1305,7 +1264,6 @@ async function checkClientName(reqBody, res) {
 function checkClientStudentId(reqBody, res) {
   console.log("[INFO] checkClientStudentId", reqBody);
   try {
-    // 요청 본문에서 학번 추출 (공백 제거)
     const sid = reqBody.value.origin.trim();
     if (!/^\d{8}$/.test(sid)) {
       console.log("[FAILED] 학번 형식 오류:", sid);
@@ -1331,7 +1289,6 @@ function checkClientStudentId(reqBody, res) {
 function checkClientPhone(reqBody, res) {
   console.log("[INFO] checkClientPhone", reqBody);
   try {
-    // 요청 본문에서 전화번호 추출 (공백 제거)
     const phone = reqBody.value.origin.trim();
     if (!/^\d{11}$/.test(phone)) {
       console.log("[FAILED] 전화번호 형식 오류 (11자리 아님):", phone);
@@ -1398,7 +1355,6 @@ async function addToDatabase(table, code, rtype, rDate, stime, etime, maskedName
     maskedName
   ]);
 
-  // logs
   const logQ = `
     INSERT INTO logs (
       reserve_code, room_type, request_type,
@@ -1434,7 +1390,6 @@ async function addToDatabaseCharger(table, code, itemName, rDate, stime, etime, 
     masked
   ]);
 
-  // logs
   const logQ = `
     INSERT INTO logs (
       reserve_code, room_type, request_type,
@@ -1500,18 +1455,6 @@ async function getLockerPassword(ctype, conn) {
   }
   return rows[0].password;
 }
-
-/***********************************************
- * (X) "하루 1회" 중복 체크 함수
- ***********************************************/
-app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  if (/selenium|headlesschrome|phantomjs|puppeteer|python-requests|bot|spider|crawl/i.test(userAgent)) {
-    console.log(`[WARN] Blocked crawler/bot -> User-Agent: ${userAgent}`);
-    return res.status(403).send('Forbidden');
-  }
-  next();
-});
 
 /***********************************************
  * 서버 실행
