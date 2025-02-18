@@ -1250,7 +1250,7 @@ async function checkClientName(reqBody, res) {
   console.log("[INFO] checkClientName", reqBody);
   try {
     const name = reqBody.value.origin.trim();
-    const kakao_id = req.user.id;
+    const kakao_id = reqBody.user.id;
     
     const [rows] = await pool.execute("SELECT * FROM students WHERE kakao_id = ?", [kakao_id]);
     if (rows.length > 0) {
