@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 // 다른 미들웨어들
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(morgan("combined-kst"));
+
 /***********************************************
  * Anti-bot 미들웨어 (최상단에 배치)
  ***********************************************/
@@ -234,6 +234,8 @@ morgan.format(
   "combined-kst",
   ':remote-addr - :remote-user [:date-kst] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms ":referrer" ":user-agent"'
 );
+
+app.use(morgan("combined-kst"));
 
 /***********************************************
  * MySQL Pool
