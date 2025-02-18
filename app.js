@@ -1229,7 +1229,7 @@ async function reserveCancel(reqBody, res) {
  * (D) 유효성 검사
  ***********************************************/
 async function reserveStartTimeCheck(reqBody, res) {
-  console.log("[INFO] reserveStartTimeCheck");
+  console.log("[INFO] reserveStartTimeCheck 호출됨");
   try {
     const st = reqBody.value.origin.slice(0, 5);
     const now = getKSTDate();
@@ -1237,6 +1237,12 @@ async function reserveStartTimeCheck(reqBody, res) {
     const [sh, sm] = st.split(":").map(Number);
     const startMin = sh * 60 + sm;
     const diff = startMin - curMin;
+
+    // 디버그 로그 추가
+    console.log(`[DEBUG] 현재 KST 시간: ${now.toLocaleTimeString('ko-KR')}`);
+    console.log(`[DEBUG] reqBody에서 받은 예약 시작 시간: ${st}`);
+    console.log(`[DEBUG] 현재 시간(분): ${curMin}, 예약 시작 시간(분): ${startMin}, 차이(분): ${diff}`);
+
     if (diff < 30) {
       console.log("[FAILED] Not available: 예약 시작 시간이 현재 KST 시각으로부터 30분 미만 ->", st);
       return res.send({
@@ -1244,7 +1250,7 @@ async function reserveStartTimeCheck(reqBody, res) {
         "message": "예약 시작 시간은 현재 시각(KST)으로부터 최소 30분 이후여야 합니다."
       });
     }
-    console.log("[SUCCESS] startTime->", st);
+    console.log("[SUCCESS] 예약 시작 시간 검증 통과:", st);
     res.send({ "status": "SUCCESS" });
   } catch (e) {
     console.error("[ERROR] reserveStartTimeCheck:", e);
