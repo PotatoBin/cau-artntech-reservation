@@ -908,6 +908,24 @@ async function reserveItem(reqBody, res, category) {
       });
     }
 
+    // 납부자 검사
+    if(await isNotPayer(client_info.name, client_info.id, conn)){
+      await conn.rollback();
+      console.log("[WARN] Not a payer");
+      return res.send({
+        "version":"2.0",
+        "template":{
+          "outputs":[{
+            "textCard":{
+              "title":"학생회비 납부자가 아닙니다",
+              "description":`이름:${client_info.name}\n학번:${client_info.id}`,
+              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+            }
+          }]
+        }
+      });
+    }
+
     if(!isAvailableTime()){
       await conn.rollback();
       return res.send({
@@ -1215,36 +1233,49 @@ async function reserveStartTimeCheck(reqBody, res){
   }
 }
 
-async function reserveClientInfoCheck(reqBody, res){
+async function reserveClientInfoCheck(reqBody, res) {
   console.log("[INFO] reserveClientInfoCheck");
   try {
     const str = reqBody.value.origin;
     const cleaned = str.replace(/[\s-]/g, '');
     const parts = cleaned.split(',');
-    if(parts.length !== 3){
+    if (parts.length !== 3) {
       console.log("[FAILED] Invalid client info->", str);
-      return res.send({ "status":"FAIL", "message":"이름,학번,전화번호" });
+      return res.send({ "status": "FAIL", "message": "이름,학번,전화번호" });
     }
     const [name, sid, pho] = parts;
-    if(!/^\d{8}$/.test(sid)){
+    if (!/^\d{8}$/.test(sid)) {
       console.log("[FAILED] Invalid studentID->", sid);
-      return res.send({ "status":"FAIL", "message":"학번은 8자리" });
+      return res.send({ "status": "FAIL", "message": "학번은 8자리" });
     }
-    if(!/^\d{11}$/.test(pho)){
+    if (!/^\d{11}$/.test(pho)) {
       console.log("[FAILED] Invalid phone->", pho);
-      return res.send({ "status":"FAIL", "message":"전화번호는 11자리" });
+      return res.send({ "status": "FAIL", "message": "전화번호는 11자리" });
     }
-    if(!name || name.length < 1){
+    if (!name || name.length < 1) {
       console.log("[FAILED] Invalid name->", name);
-      return res.send({ "status":"FAIL", "message":"이름을 입력" });
+      return res.send({ "status": "FAIL", "message": "이름을 입력" });
     }
     console.log("[SUCCESS] clientInfo->", name, sid, pho);
-    res.send({ "status":"SUCCESS" });
-  } catch(e) {
+
+    // 카카오 아이디와 학생 정보 중복 체크
+    const kakao_id = reqBody.userRequest.user.id;
+    const [rows] = await pool.execute(
+      "SELECT * FROM students WHERE kakao_id = ? OR (name = ? AND student_id = ? AND phone = ?)",
+      [kakao_id, name, sid, pho]
+    );
+    if (rows.length > 0) {
+      console.log("[FAILED] Duplicate student info found for kakao_id:", kakao_id, "or same student data", { name, sid, pho });
+      return res.send({ "status": "FAIL", "message": "이미 등록된 학생 정보입니다." });
+    }
+
+    res.send({ "status": "SUCCESS" });
+  } catch (e) {
     console.error("[ERROR] reserveClientInfoCheck:", e);
-    res.send({ "status":"FAIL", "message":"잘못된 요청" });
+    res.send({ "status": "FAIL", "message": "잘못된 요청" });
   }
 }
+
 
 async function reserveCodeCheck(reqBody, res){
   console.log("[INFO] reserveCodeCheck");
