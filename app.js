@@ -361,7 +361,6 @@ async function certifyCode(reqBody, res) {
   const client_name   = reqBody.action.params.client_name;
   const client_id     = reqBody.action.params.client_id;
   const client_phone  = reqBody.action.params.client_phone;
-  // 예약 관련 함수들은 req.userRequest.user.id를 사용
   const kakao_id      = reqBody.userRequest.user.id;
   
   console.log("[DEBUG] certifyCode parameters:", { code, email, client_name, client_id, client_phone, kakao_id });
@@ -656,7 +655,6 @@ async function reserve(reqBody, res, room_type) {
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
-    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id       = reqBody.userRequest.user.id;
 
     const [studentRows] = await conn.execute(
@@ -867,7 +865,6 @@ async function reserveItem(reqBody, res, category) {
 
     const start_time_str = JSON.parse(reqBody.action.params.start_time).value;
     const end_time_str   = JSON.parse(reqBody.action.params.end_time).value;
-    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id       = reqBody.userRequest.user.id;
 
     const [studentRows] = await conn.execute(
@@ -1079,7 +1076,6 @@ async function reserveCancel(reqBody, res) {
     await conn.beginTransaction();
 
     const reserve_code = reqBody.action.params.reserve_code;
-    // 예약 관련 함수는 req.userRequest.user.id 사용
     const kakao_id = reqBody.userRequest.user.id;
     console.log("[DEBUG] code=", reserve_code, "kakao_id=", kakao_id);
 
@@ -1245,8 +1241,7 @@ async function checkClientName(reqBody, res) {
   console.log("[INFO] checkClientName", reqBody);
   try {
     const name = reqBody.value.origin.trim();
-    // checkClientName는 req.user.id 사용 (원래대로)
-    const kakao_id = req.user.id;
+    const kakao_id = reqBody.user.id;
     
     const [rows] = await pool.execute("SELECT * FROM students WHERE kakao_id = ?", [kakao_id]);
     if (rows.length > 0) {
