@@ -9,10 +9,23 @@ const path = require("path");
 const axios = require("axios");
 
 /***********************************************
- * 압축 미들웨어 적용 (가능한 최상단에 배치)
+ * 미들웨어 적용
  ***********************************************/
 app.use(compression());
+// 글로벌 로그 미들웨어 (모든 요청에 대해 로그 기록)
 
+app.use((req, res, next) => {
+  const now = new Date();
+  const formattedTime = now.toLocaleString('ko-KR', { hour12: false });
+  const ip = req.ip.replace(/^::ffff:/, '');
+  console.log(`[REQUEST] ${formattedTime} ${req.method} ${req.originalUrl} - IP: ${ip}`);
+  next();
+});
+
+// 다른 미들웨어들
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(morgan("combined-kst"));
 /***********************************************
  * Anti-bot 미들웨어 (최상단에 배치)
  ***********************************************/
@@ -236,23 +249,9 @@ const pool = mysql.createPool({
 });
 
 /***********************************************
- * Express 미들웨어 및 Router 설정
+ *  Router 설정
  ***********************************************/
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(morgan("combined-kst"));
 app.use("/reserve", router);
-
-/***********************************************
- * 라우터 공통 미들웨어 (GET/POST 요청 로그, IP 포함)
- ***********************************************/
-router.use((req, res, next) => {
-  const now = new Date();
-  const formattedTime = now.toLocaleString('ko-KR', { hour12: false });
-  const ip = req.ip.replace(/^::ffff:/, '');
-  console.log(`[REQUEST] ${formattedTime} ${req.method} ${req.originalUrl} - IP: ${ip}`);
-  next();
-});
 
 /***********************************************
  * Health check
@@ -531,13 +530,7 @@ async function certifyCode(reqBody, res) {
 
 /***********************************************
  * Helper 함수들
- ***********************************************/
-function parseClientInfo(str) {
-  const cleaned = str.replace(/[\s-]/g, "");
-  const parts = cleaned.split(",");
-  return { name: parts[0], id: parts[1], phone: parts[2] };
-}
-
+ ***********************************************/g
 function hideMiddleChar(str) {
   if (str.length < 3) return str[0] + "*";
   return str[0] + "*".repeat(str.length - 2) + str[str.length - 1];
