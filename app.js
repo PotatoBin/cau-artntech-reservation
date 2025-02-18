@@ -247,8 +247,10 @@ app.use("/reserve", router);
  * 라우터 공통 미들웨어 (GET/POST 요청 로그, IP 포함)
  ***********************************************/
 router.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[REQUEST] ${timestamp} ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+  const now = new Date();
+  const formattedTime = now.toLocaleString('ko-KR', { hour12: false });
+  const ip = req.ip.replace(/^::ffff:/, '');
+  console.log(`[REQUEST] ${formattedTime} ${req.method} ${req.originalUrl} - IP: ${ip}`);
   next();
 });
 
@@ -1233,11 +1235,6 @@ async function reserveStartTimeCheck(reqBody, res) {
     const [sh, sm] = st.split(":").map(Number);
     const startMin = sh * 60 + sm;
     const diff = startMin - curMin;
-    
-    // 디버그 로그
-    console.log(`[DEBUG] 현재 KST 시간: ${now.toLocaleTimeString('ko-KR')}`);
-    console.log(`[DEBUG] reqBody에서 받은 예약 시작 시간: ${st}`);
-    console.log(`[DEBUG] 현재 시간(분): ${curMin}, 예약 시작 시간(분): ${startMin}, 차이(분): ${diff}`);
     
     // 예약 시작 시간이 현재 시각보다 이후여야 함 (0분 이하이면 실패)
     if (diff <= 0) {
