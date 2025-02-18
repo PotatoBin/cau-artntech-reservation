@@ -1237,7 +1237,7 @@ async function reserveStartTimeCheck(reqBody, res) {
 }
 
 async function checkClientName(reqBody, res) {
-  console.log("[INFO] checkClientName", reqBody);
+  console.log("[INFO] checkClientName", reqBody.value.origin);
   try {
     const name = reqBody.value.origin.trim();
     const kakao_id = reqBody.user.id;
@@ -1256,7 +1256,7 @@ async function checkClientName(reqBody, res) {
 }
 
 function checkClientStudentId(reqBody, res) {
-  console.log("[INFO] checkClientStudentId", reqBody);
+  console.log("[INFO] checkClientStudentId", reqBody.value.origin);
   try {
     const sid = reqBody.value.origin.trim();
     if (!/^\d{8}$/.test(sid)) {
@@ -1281,7 +1281,7 @@ function checkClientStudentId(reqBody, res) {
 }
 
 function checkClientPhone(reqBody, res) {
-  console.log("[INFO] checkClientPhone", reqBody);
+  console.log("[INFO] checkClientPhone", reqBody.value.origin);
   try {
     const phone = reqBody.value.origin.trim();
     if (!/^\d{11}$/.test(phone)) {
