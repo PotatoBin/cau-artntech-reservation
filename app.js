@@ -17,19 +17,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(helmet());
 
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-    imgSrc: ["'self'", "data:"],
-    connectSrc: ["'self'"],
-    fontSrc: ["'self'"],
-    objectSrc: ["'none'"],
-    upgradeInsecureRequests: []
-  }
-}));
-
 /***********************************************
  * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
  ***********************************************/
@@ -926,7 +913,7 @@ async function reserveItem(reqBody, res, category) {
       });
     }
 
-    if(await isNotPayer(student_info.name, student_info.id, conn)){
+    if(await isNotPayer(student_info.name, student_info.student_id, conn)){
       await conn.rollback();
       console.log("[WARN] Not a payer");
       return res.send({
