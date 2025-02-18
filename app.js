@@ -530,7 +530,7 @@ async function certifyCode(reqBody, res) {
 
 /***********************************************
  * Helper 함수들
- ***********************************************/g
+ ***********************************************/
 function hideMiddleChar(str) {
   if (str.length < 3) return str[0] + "*";
   return str[0] + "*".repeat(str.length - 2) + str[str.length - 1];
