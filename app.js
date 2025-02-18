@@ -17,6 +17,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(helmet());
 
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+    imgSrc: ["'self'", "data:"],
+    connectSrc: ["'self'"],
+    fontSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    upgradeInsecureRequests: []
+  }
+}));
+
+
 /***********************************************
  * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
  ***********************************************/
