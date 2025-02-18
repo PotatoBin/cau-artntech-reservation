@@ -651,7 +651,7 @@ async function reserve(reqBody, res, room_type) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "학생 정보가 존재하지 않습니다.",
+              "title": "등록된 정보가 존재하지 않습니다.",
               "description": "재학생 인증이 필요합니다.",
               "buttons": [{
                 "label": "재학생 인증",
@@ -869,7 +869,7 @@ async function reserveItem(reqBody, res, category) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "학생 정보가 존재하지 않습니다.",
+              "title": "등록된 정보가 존재하지 않습니다.",
               "description": "재학생 인증이 필요합니다.",
               "buttons": [{
                 "label": "재학생 인증",
@@ -1234,6 +1234,7 @@ async function reserveStartTimeCheck(reqBody, res){
 }
 
 async function reserveClientInfoCheck(reqBody, res) {
+  console.log(reqBody);
   console.log("[INFO] reserveClientInfoCheck");
   try {
     const str = reqBody.value.origin;
