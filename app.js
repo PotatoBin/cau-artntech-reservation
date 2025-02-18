@@ -52,6 +52,10 @@ function getTodayKST() {
   return now.toISOString().split('T')[0]; // "YYYY-MM-DD"
 }
 
+function getKSTDate() {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+
 app.get("/view/newmedialibrary", async (req, res) => {
   try {
     const today = getTodayKST();
@@ -549,18 +553,17 @@ function isWrongHours(st, et) {
 }
 
 function isAvailableTime() {
-  const now = new Date();
-  const day = now.getDay();
+  const now = getKSTDate();
   const hour = now.getHours();
   // if (day === 0 || day === 6) {
   //   console.log("[WARN] Weekend");
   //   return false;
   // }
   if (hour < 9 || hour >= 22) {
-    console.log("[WARN] Out of hours");
+    console.log("[WARN] Out of hours (KST)");
     return false;
   }
-  console.log("[INFO] isAvailableTime-> OK");
+  console.log("[INFO] isAvailableTime-> OK (KST)");
   return true;
 }
 
@@ -1225,24 +1228,27 @@ async function reserveCancel(reqBody, res) {
 /***********************************************
  * (D) 유효성 검사
  ***********************************************/
-async function reserveStartTimeCheck(reqBody, res){
+async function reserveStartTimeCheck(reqBody, res) {
   console.log("[INFO] reserveStartTimeCheck");
   try {
-    const st = reqBody.value.origin.slice(0,5);
-    const now = new Date();
-    const curMin = now.getHours()*60 + now.getMinutes();
+    const st = reqBody.value.origin.slice(0, 5);
+    const now = getKSTDate();
+    const curMin = now.getHours() * 60 + now.getMinutes();
     const [sh, sm] = st.split(":").map(Number);
-    const startMin = sh*60 + sm;
+    const startMin = sh * 60 + sm;
     const diff = startMin - curMin;
-    if(diff < 30){
-      console.log("[FAILED] Not available: 예약 시작 시간이 현재 시각으로부터 30분 미만 ->", st);
-      return res.send({ "status":"FAIL", "message":"예약 시작 시간은 현재 시각으로부터 최소 30분 이후여야 합니다." });
+    if (diff < 30) {
+      console.log("[FAILED] Not available: 예약 시작 시간이 현재 KST 시각으로부터 30분 미만 ->", st);
+      return res.send({
+        "status": "FAIL",
+        "message": "예약 시작 시간은 현재 시각(KST)으로부터 최소 30분 이후여야 합니다."
+      });
     }
     console.log("[SUCCESS] startTime->", st);
-    res.send({ "status":"SUCCESS" });
-  } catch(e) {
+    res.send({ "status": "SUCCESS" });
+  } catch (e) {
     console.error("[ERROR] reserveStartTimeCheck:", e);
-    res.send({ "status":"FAIL", "message":"잘못된 요청" });
+    res.send({ "status": "FAIL", "message": "잘못된 요청" });
   }
 }
 
