@@ -402,7 +402,7 @@ async function certifyCode(reqBody, res) {
           "outputs": [{
             "textCard": {
               "title": "인증에 실패하였습니다.",
-              "description": "제공하신 학생 정보가 재학생 정보와 일치하지 않습니다.",
+              "description": "제공하신 학생 정보가 재학생 정보와 일치하지 않습니다. 정확한 본인 정보를 기입해주세요.",
               "buttons": [{
                 "label": "처음으로",
                 "action": "block",
@@ -729,7 +729,7 @@ async function reserve(reqBody, res, room_type) {
         "template":{
           "outputs":[{
             "textCard":{
-              "title":"이미 예약 내역이 있습니다",
+              "title":"오늘 이미 다른 방을 예약한 내역이 있습니다",
               "description":"같은 항목 대여는 하루에 1회 가능합니다.",
               "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
@@ -947,7 +947,7 @@ async function reserveItem(reqBody, res, category) {
         "template":{
           "outputs":[{
             "textCard":{
-              "title":"이미 예약 내역이 있습니다",
+              "title":"오늘 이미 같은 물품을 예약한 내역이 있습니다",
               "description":"같은 항목 대여는 하루에 1회 가능합니다.",
               "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
             }
