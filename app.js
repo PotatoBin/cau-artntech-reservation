@@ -12,19 +12,30 @@ const axios = require("axios");
  * 미들웨어 적용
  ***********************************************/
 app.use(compression());
-// 글로벌 로그 미들웨어 (모든 요청에 대해 로그 기록)
-
-app.use((req, res, next) => {
-  const now = new Date();
-  const formattedTime = now.toLocaleString('ko-KR', { hour12: false });
-  const ip = req.ip.replace(/^::ffff:/, '');
-  console.log(`[REQUEST] ${formattedTime} ${req.method} ${req.originalUrl} - IP: ${ip}`);
-  next();
-});
-
 // 다른 미들웨어들
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+/***********************************************
+ * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
+ ***********************************************/
+morgan.token("date-kst", () => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const MM = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
+});
+
+morgan.format(
+  "combined-kst",
+  ':remote-addr - :remote-user [:date-kst] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms ":referrer" ":user-agent"'
+);
+
+app.use(morgan("combined-kst"));
 
 /***********************************************
  * Anti-bot 미들웨어 (최상단에 배치)
@@ -215,27 +226,6 @@ app.get("/view/charger", async (req, res) => {
     res.status(500).send("서버 오류");
   }
 });
-
-/***********************************************
- * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
- ***********************************************/
-morgan.token("date-kst", () => {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const MM = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
-  const ss = String(now.getSeconds()).padStart(2, "0");
-  return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`;
-});
-
-morgan.format(
-  "combined-kst",
-  ':remote-addr - :remote-user [:date-kst] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms ":referrer" ":user-agent"'
-);
-
-app.use(morgan("combined-kst"));
 
 /***********************************************
  * MySQL Pool
