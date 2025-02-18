@@ -52,10 +52,6 @@ function getTodayKST() {
   return now.toISOString().split('T')[0]; // "YYYY-MM-DD"
 }
 
-function getKSTDate() {
-  return new Date();
-}
-
 app.get("/view/newmedialibrary", async (req, res) => {
   try {
     const today = getTodayKST();
@@ -553,7 +549,7 @@ function isWrongHours(st, et) {
 }
 
 function isAvailableTime() {
-  const now = getKSTDate();
+  const now = new Date();
   const hour = now.getHours();
   // if (day === 0 || day === 6) {
   //   console.log("[WARN] Weekend");
@@ -1232,22 +1228,23 @@ async function reserveStartTimeCheck(reqBody, res) {
   console.log("[INFO] reserveStartTimeCheck 호출됨");
   try {
     const st = reqBody.value.origin.slice(0, 5);
-    const now = getKSTDate();
+    const now = new Date();
     const curMin = now.getHours() * 60 + now.getMinutes();
     const [sh, sm] = st.split(":").map(Number);
     const startMin = sh * 60 + sm;
     const diff = startMin - curMin;
-
-    // 디버그 로그 추가
+    
+    // 디버그 로그
     console.log(`[DEBUG] 현재 KST 시간: ${now.toLocaleTimeString('ko-KR')}`);
     console.log(`[DEBUG] reqBody에서 받은 예약 시작 시간: ${st}`);
     console.log(`[DEBUG] 현재 시간(분): ${curMin}, 예약 시작 시간(분): ${startMin}, 차이(분): ${diff}`);
-
-    if (diff < 30) {
-      console.log("[FAILED] Not available: 예약 시작 시간이 현재 KST 시각으로부터 30분 미만 ->", st);
+    
+    // 예약 시작 시간이 현재 시각보다 이후여야 함 (0분 이하이면 실패)
+    if (diff <= 0) {
+      console.log("[FAILED] 예약 시작 시간이 현재 KST 시각 이후여야 합니다 ->", st);
       return res.send({
         "status": "FAIL",
-        "message": "예약 시작 시간은 현재 시각(KST)으로부터 최소 30분 이후여야 합니다."
+        "message": "예약 시작 시간은 현재 시각 이후여야 합니다."
       });
     }
     console.log("[SUCCESS] 예약 시작 시간 검증 통과:", st);
