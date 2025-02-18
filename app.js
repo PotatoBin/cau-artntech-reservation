@@ -7,12 +7,13 @@ const mysql = require("mysql2/promise");
 const morgan = require("morgan");
 const path = require("path");
 const axios = require("axios");
+const helmet = require("helmet");
 
 /***********************************************
  * 미들웨어 적용
  ***********************************************/
 app.use(compression());
-// 다른 미들웨어들
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
