@@ -244,6 +244,15 @@ app.use(morgan("combined-kst"));
 app.use("/reserve", router);
 
 /***********************************************
+ * 라우터 공통 미들웨어 (GET/POST 요청 로그, IP 포함)
+ ***********************************************/
+router.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[REQUEST] ${timestamp} ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+  next();
+});
+
+/***********************************************
  * Health check
  ***********************************************/
 router.head("/wakeup", (req, res) => {
@@ -343,7 +352,7 @@ async function certifyCode(reqBody, res) {
       "template": {
         "outputs": [{
           "textCard": {
-            "title": "올바르지 않은 인증 코드 형식입니다.",
+            "title": "올바르지 않은 인증 코드 형식입니다",
             "description": "다시 시도해주세요.",
             "buttons": [{
               "label": "처음으로",
@@ -393,8 +402,8 @@ async function certifyCode(reqBody, res) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "인증에 실패하였습니다.",
-              "description": "제공하신 학생 정보가 재학생 정보와 일치하지 않습니다. 정확한 본인 정보를 기입해주세요.",
+              "title": "인증에 실패하였습니다",
+              "description": "제공하신 정보가 재학생 정보와 일치하지 않습니다. 정확한 본인 정보를 기입해주세요.",
               "buttons": [{
                 "label": "처음으로",
                 "action": "block",
@@ -466,8 +475,8 @@ async function certifyCode(reqBody, res) {
           "template": {
             "outputs": [{
               "textCard": {
-                "title": "인증에 실패하였습니다.",
-                "description": "다시 시도해주세요. (DB 오류)",
+                "title": "인증에 실패하였습니다",
+                "description": "DB 오류가 발생하였습니다. 다시 시도해주세요.",
                 "buttons": [{
                   "label": "처음으로",
                   "action": "block",
@@ -485,8 +494,8 @@ async function certifyCode(reqBody, res) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "인증에 실패하였습니다.",
-              "description": data.message || "다시 시도해주세요.",
+              "title": "인증에 실패하였습니다",
+              "description": "인증번호가 일치하지 않습니다. 다시 시도해주세요.",
               "buttons": [{
                 "label": "처음으로",
                 "action": "block",
@@ -504,7 +513,7 @@ async function certifyCode(reqBody, res) {
       "template": {
         "outputs": [{
           "textCard": {
-            "title": "인증에 실패하였습니다.",
+            "title": "인증에 실패하였습니다",
             "description": "다시 시도해주세요.",
             "buttons": [{
               "label": "처음으로",
@@ -669,7 +678,7 @@ async function reserve(reqBody, res, room_type) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "등록된 정보가 존재하지 않습니다.",
+              "title": "등록된 정보가 존재하지 않습니다",
               "description": "재학생 인증이 필요합니다.",
               "buttons": [{
                 "label": "재학생 인증",
@@ -879,7 +888,7 @@ async function reserveItem(reqBody, res, category) {
         "template": {
           "outputs": [{
             "textCard": {
-              "title": "등록된 정보가 존재하지 않습니다.",
+              "title": "등록된 정보가 존재하지 않습니다",
               "description": "재학생 인증이 필요합니다.",
               "buttons": [{
                 "label": "재학생 인증",
@@ -1241,7 +1250,7 @@ async function checkClientName(reqBody, res) {
   console.log("[INFO] checkClientName", reqBody);
   try {
     const name = reqBody.value.origin.trim();
-    const kakao_id = reqBody.user.id;
+    const kakao_id = req.user.id;
     
     const [rows] = await pool.execute("SELECT * FROM students WHERE kakao_id = ?", [kakao_id]);
     if (rows.length > 0) {
