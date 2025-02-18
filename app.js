@@ -268,11 +268,14 @@ router.post("/MULTITAP5", (req, res) => reserveItem(req.body, res, "멀티탭 (5
 
 // 유효성 검사
 router.post("/check/start_time",  (req, res) => reserveStartTimeCheck(req.body, res));
-router.post("/check/client_info", (req, res) => reserveClientInfoCheck(req.body, res));
 router.post("/check/reserve_code",(req, res) => reserveCodeCheck(req.body, res));
 
 // 예약 취소
 router.post("/cancel", (req, res) => reserveCancel(req.body, res));
+
+router.post("/check/name", (req, res) => checkClientName(req.body, res));
+router.post("/check/student_id", (req, res) => checkClientStudentId(req.body, res));
+router.post("/check/phone", (req, res) => checkClientPhone(req.body, res));
 
 router.post("/certify", (req, res) => certify(req.body, res));
 router.post("/certifycode", (req, res) => certifyCode(req.body, res));
@@ -358,52 +361,99 @@ async function certifyCode(reqBody, res) {
   }
   // 숫자로만 구성된 문자열을 정수형으로 변환
   const code = parseInt(codeStr, 10);
-
-  const email = reqBody.action.params.email;
-  const kakao_id = reqBody.userRequest.user.id;
-
-  console.log("[DEBUG] certifyCode parameters:", { code, email, kakao_id });
+  
+  // 개별 파라미터 변경: client_info 대신 개별 필드 사용
+  const email         = reqBody.action.params.email;
+  const client_name   = reqBody.action.params.client_name;
+  const client_id     = reqBody.action.params.client_id;
+  const client_phone  = reqBody.action.params.client_phone;
+  const kakao_id      = reqBody.userRequest.user.id;
+  
+  console.log("[DEBUG] certifyCode parameters:", { code, email, client_name, client_id, client_phone, kakao_id });
+  
+  // 재학생 정보 검증: student_master 테이블에서 client_id, client_phone, email 중 하나라도 일치하는 레코드가 있는지 조회
+  const [rows] = await pool.execute(
+    "SELECT * FROM student_master WHERE student_id = ? OR phone = ? OR email = ?",
+    [client_id, client_phone, email]
+  );
+  
+  if (rows.length > 0) {
+    // 찾은 레코드들 중 하나라도 전체 정보(이름, 학번, 전화번호, 이메일)가 완벽하게 일치하는지 확인
+    let fullyMatched = false;
+    for (const record of rows) {
+      if (
+        record.student_id === client_id &&
+        record.name === client_name &&
+        record.phone === client_phone &&
+        record.email === email
+      ) {
+        fullyMatched = true;
+        break;
+      }
+    }
+    if (!fullyMatched) {
+      console.log("[ERROR] Provided student information does not match master record", {
+        provided: { client_id, client_name, client_phone, email },
+        found: rows
+      });
+      return res.send({
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "인증에 실패하였습니다.",
+              "description": "제공하신 학생 정보가 재학생 정보와 일치하지 않습니다.",
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
+            }
+          }]
+        }
+      });
+    }
+  }
+  // student_master에 아무런 레코드가 없으면, 재학생 정보가 수집되지 않은 것으로 보고 그대로 진행
   
   // UnivCert API에 POST할 payload 준비
   const payload = {
     key: process.env.UNIVCERT,  // .env에 저장된 "UNIVCERT" 키
     email: email,               // 인증대상 이메일
-    univName: "중앙대학교",       // 중앙대라고 명시
+    univName: "중앙대학교",      // 중앙대라고 명시
     code: code                  // 사용자 입력 인증코드 (정수형)
   };
-
+  
   console.log("[DEBUG] Payload for certifyCode UnivCert API:", payload);
-
+  
   try {
     // UnivCert 인증코드 확인 요청
     const response = await axios.post("https://univcert.com/api/v1/certifycode", payload);
     const data = response.data;
     console.log("[DEBUG] Response from certifyCode UnivCert API:", data);
-
+    
     if (data.success === true) {
-      // 인증 성공 시, students 테이블에 INSERT
+      // 인증 성공 시, students 테이블에 INSERT (여기서는 이미 인증된 학생 정보를 기록)
       let conn;
       try {
         conn = await pool.getConnection();
         console.log("[DEBUG] DB connection acquired");
-
+        
         const insertQ = `
           INSERT INTO students (name, student_id, phone, email, kakao_id)
           VALUES (?,?,?,?,?)
         `;
-        const clientInfo = reqBody.action.params.client_info ? parseClientInfo(reqBody.action.params.client_info) : { name: "", id: "", phone: "" };
-
         await conn.execute(insertQ, [
-          clientInfo.name,
-          clientInfo.id,
-          clientInfo.phone,
+          client_name,
+          client_id,
+          client_phone,
           email,
           kakao_id
         ]);
         
         console.log("[DEBUG] Inserted student data for certification");
         conn.release();
-
+        
         // 인증 성공 후, 카카오 챗봇 응답
         return res.send({
           "version": "2.0",
@@ -424,7 +474,6 @@ async function certifyCode(reqBody, res) {
       } catch (dbErr) {
         if (conn) conn.release();
         console.error("[ERROR] DB Insert:", dbErr);
-        // DB 오류 시
         return res.send({
           "version": "2.0",
           "template": {
@@ -443,7 +492,6 @@ async function certifyCode(reqBody, res) {
         });
       }
     } else {
-      // UnivCert 서버 응답이 200이지만 data.success=false 인 경우
       console.log("[DEBUG] 인증번호 불일치 혹은 기타 오류:", data.message);
       return res.send({
         "version": "2.0",
@@ -463,7 +511,6 @@ async function certifyCode(reqBody, res) {
       });
     }
   } catch (error) {
-    // 요청 자체가 실패했거나, 4xx / 5xx 에러인 경우
     console.error("[ERROR] certifyCode UnivCert API:", error.message);
     return res.send({
       "version": "2.0",
@@ -483,6 +530,7 @@ async function certifyCode(reqBody, res) {
     });
   }
 }
+
 
 /***********************************************
  * Helper 함수들
@@ -1233,51 +1281,73 @@ async function reserveStartTimeCheck(reqBody, res){
   }
 }
 
-async function reserveClientInfoCheck(reqBody, res) {
-  console.log(reqBody);
-  console.log("[INFO] reserveClientInfoCheck");
+async function checkClientName(reqBody, res) {
+  console.log("[INFO] checkClientName", reqBody);
   try {
-    const str = reqBody.value.origin;
-    const cleaned = str.replace(/[\s-]/g, '');
-    const parts = cleaned.split(',');
-    if (parts.length !== 3) {
-      console.log("[FAILED] Invalid client info->", str);
-      return res.send({ "status": "FAIL", "message": "이름,학번,전화번호" });
-    }
-    const [name, sid, pho] = parts;
-    if (!/^\d{8}$/.test(sid)) {
-      console.log("[FAILED] Invalid studentID->", sid);
-      return res.send({ "status": "FAIL", "message": "학번은 8자리" });
-    }
-    if (!/^\d{11}$/.test(pho)) {
-      console.log("[FAILED] Invalid phone->", pho);
-      return res.send({ "status": "FAIL", "message": "전화번호는 11자리" });
-    }
-    if (!name || name.length < 1) {
-      console.log("[FAILED] Invalid name->", name);
-      return res.send({ "status": "FAIL", "message": "이름을 입력" });
-    }
-    console.log("[SUCCESS] clientInfo->", name, sid, pho);
-
+    // 요청 본문에서 이름을 추출 (공백 제거)
+    const name = reqBody.value.origin.trim();
     const kakao_id = reqBody.user.id;
-
-    const [rows] = await pool.execute(
-      "SELECT * FROM students WHERE kakao_id = ? OR (name = ? AND student_id = ? AND phone = ?)",
-      [kakao_id, name, sid, pho]
-    );
+    
+    // 이미 인증된 카카오 아이디가 있는지 체크
+    const [rows] = await pool.execute("SELECT * FROM students WHERE kakao_id = ?", [kakao_id]);
     if (rows.length > 0) {
-      console.log("[FAILED] Duplicate student info found for kakao_id:", kakao_id, "or same student data", { name, sid, pho });
-      return res.send({ "status": "FAIL", "message": "이미 등록된 학생 정보입니다." });
+      console.log("[FAILED] 이미 등록된 카카오 아이디:", kakao_id);
+      return res.send({ "status": "FAIL", "message": "이미 인증된 학생 정보가 있습니다." });
     }
-
-    res.send({ "status": "SUCCESS" });
+    console.log("[SUCCESS] 이름 검증 통과:", name);
+    res.send({ "status": "SUCCESS", "message": "이름 검증 성공" });
   } catch (e) {
-    console.error("[ERROR] reserveClientInfoCheck:", e);
-    res.send({ "status": "FAIL", "message": "잘못된 요청" });
+    console.error("[ERROR] checkClientName:", e);
+    res.send({ "status": "FAIL", "message": "이름 검증 중 오류" });
   }
 }
 
+function checkClientStudentId(reqBody, res) {
+  console.log("[INFO] checkClientStudentId", reqBody);
+  try {
+    // 요청 본문에서 학번 추출 (공백 제거)
+    const sid = reqBody.value.origin.trim();
+    if (!/^\d{8}$/.test(sid)) {
+      console.log("[FAILED] 학번 형식 오류:", sid);
+      return res.send({ "status": "FAIL", "message": "학번은 8자리 숫자여야 합니다." });
+    }
+    const year = parseInt(sid.substring(0, 4), 10);
+    if (year <= 2015 || year >= 2025) {
+      console.log("[FAILED] 입학년도 오류:", sid);
+      return res.send({ "status": "FAIL", "message": "학번의 입학년도는 2016부터 2024 사이여야 합니다." });
+    }
+    if (sid.endsWith("0000")) {
+      console.log("[FAILED] 가짜 학번 감지:", sid);
+      return res.send({ "status": "FAIL", "message": "가짜 학번입니다." });
+    }
+    console.log("[SUCCESS] 학번 검증 통과:", sid);
+    res.send({ "status": "SUCCESS", "message": "학번 검증 성공" });
+  } catch (e) {
+    console.error("[ERROR] checkClientStudentId:", e);
+    res.send({ "status": "FAIL", "message": "학번 검증 중 오류" });
+  }
+}
 
+function checkClientPhone(reqBody, res) {
+  console.log("[INFO] checkClientPhone", reqBody);
+  try {
+    // 요청 본문에서 전화번호 추출 (공백 제거)
+    const phone = reqBody.value.origin.trim();
+    if (!/^\d{11}$/.test(phone)) {
+      console.log("[FAILED] 전화번호 형식 오류 (11자리 아님):", phone);
+      return res.send({ "status": "FAIL", "message": "전화번호는 11자리 숫자여야 합니다." });
+    }
+    if (!phone.startsWith("010")) {
+      console.log("[FAILED] 전화번호 시작 오류 (010 아님):", phone);
+      return res.send({ "status": "FAIL", "message": "전화번호는 010으로 시작해야 합니다." });
+    }
+    console.log("[SUCCESS] 전화번호 검증 통과:", phone);
+    res.send({ "status": "SUCCESS", "message": "전화번호 검증 성공" });
+  } catch (e) {
+    console.error("[ERROR] checkClientPhone:", e);
+    res.send({ "status": "FAIL", "message": "전화번호 검증 중 오류" });
+  }
+}
 
 async function reserveCodeCheck(reqBody, res){
   console.log("[INFO] reserveCodeCheck");
