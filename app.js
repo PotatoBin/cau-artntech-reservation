@@ -13,9 +13,9 @@ const helmet = require("helmet");
  * 미들웨어 적용
  ***********************************************/
 app.use(compression());
-app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(helmet());
 
 /***********************************************
  * Morgan 로그 설정 (원본 그대로: 서버의 로컬 시간 기준)
