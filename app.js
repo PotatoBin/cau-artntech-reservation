@@ -53,7 +53,7 @@ function getTodayKST() {
 }
 
 function getKSTDate() {
-  return new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return new Date();
 }
 
 app.get("/view/newmedialibrary", async (req, res) => {
