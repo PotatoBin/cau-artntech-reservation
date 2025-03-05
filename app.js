@@ -1264,9 +1264,9 @@ function checkClientStudentId(reqBody, res) {
       return res.send({ "status": "FAIL", "message": "학번은 8자리 숫자여야 합니다." });
     }
     const year = parseInt(sid.substring(0, 4), 10);
-    if (year <= 2015 || year >= 2025) {
+    if (year <= 2015 || year >= 2026) {
       console.log("[FAILED] 입학년도 오류:", sid);
-      return res.send({ "status": "FAIL", "message": "학번의 입학년도는 2016부터 2024 사이여야 합니다." });
+      return res.send({ "status": "FAIL", "message": "학번의 입학년도는 2016부터 2025 사이여야 합니다." });
     }
     if (sid.endsWith("0000")) {
       console.log("[FAILED] 가짜 학번 감지:", sid);
@@ -1405,7 +1405,8 @@ async function addToDatabaseCharger(table, code, itemName, rDate, stime, etime, 
  * (F) 코드 생성 (트랜잭션 인자)
  ***********************************************/
 async function generateReserveCode(rtype, conn) {
-  console.log("[INFO] generateReserveCode->", rtype);
+  console.
+  log("[INFO] generateReserveCode->", rtype);
   const room_codes = {
     "01BLUE": "1", "02GRAY": "2", "03SILVER": "3", "04GOLD": "4",
     "GLAB1": "5", "GLAB2": "6"
