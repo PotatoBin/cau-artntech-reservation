@@ -742,7 +742,7 @@ async function reserve(reqBody, res, room_type) {
       });
     }
 
-    if (isAvailableTime()) {
+    if (!isAvailableTime()) {
       await conn.rollback();
       console.log("[WARN] not available time");
       return res.send({
