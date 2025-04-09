@@ -652,7 +652,7 @@ async function reserve(reqBody, res, room_type) {
     const kakao_id       = reqBody.userRequest.user.id;
 
     const [studentRows] = await conn.execute(
-      "SELECT name, student_id, phone FROM students WHERE kakao_id = ?",
+      "SELECT name, student_id, phone, blocked FROM students WHERE kakao_id = ?",
       [kakao_id]
     );
     if (studentRows.length === 0) {
@@ -675,7 +675,30 @@ async function reserve(reqBody, res, room_type) {
         }
       });
     }
+    
     const student_info = studentRows[0];
+
+    // 블랙리스트 체크: blocked 컬럼에 값이 있으면 예약 거부
+    if (student_info.blocked && student_info.blocked.trim() !== "") {
+      await conn.rollback();
+      console.log("[WARN] Blacklisted user ->", kakao_id, "Reason:", student_info.blocked);
+      return res.send({
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "예약이 제한된 사용자입니다",
+              "description": `사유: ${student_info.blocked}`,
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
+            }
+          }]
+        }
+      });
+    }
 
     const now = new Date();
     const dateStr = now.toISOString().split("T")[0];
@@ -688,13 +711,17 @@ async function reserve(reqBody, res, room_type) {
       await conn.rollback();
       console.log("[WARN] same category duplication ->", room_type);
       return res.send({
-        "version":"2.0",
-        "template":{
-          "outputs":[{
-            "textCard":{
-              "title":"오늘 이미 다른 방을 예약한 내역이 있습니다",
-              "description":"같은 항목 대여는 하루에 1회 가능합니다.",
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "오늘 이미 다른 방을 예약한 내역이 있습니다",
+              "description": "같은 항목 대여는 하루에 1회 가능합니다.",
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
             }
           }]
         }
@@ -702,30 +729,34 @@ async function reserve(reqBody, res, room_type) {
     }
 
     let table;
-    if (["01BLUE","02GRAY","03SILVER","04GOLD"].includes(room_type)) {
+    if (["01BLUE", "02GRAY", "03SILVER", "04GOLD"].includes(room_type)) {
       table = "new_media_library";
-    } else if (["GLAB1","GLAB2"].includes(room_type)) {
+    } else if (["GLAB1", "GLAB2"].includes(room_type)) {
       table = "glab";
     } else {
       await conn.rollback();
       console.log("[FAIL] Invalid room_type->", room_type);
       return res.send({
-        status:"FAIL",
-        message:"잘못된 방 유형"
+        status: "FAIL",
+        message: "잘못된 방 유형"
       });
     }
 
-    if (!isAvailableTime()) {
+    if (isAvailableTime()) {
       await conn.rollback();
       console.log("[WARN] not available time");
       return res.send({
-        "version":"2.0",
-        "template":{
-          "outputs":[{
-            "textCard":{
-              "title":"현재 예약할 수 없는 시간입니다",
-              "description":"평일 9시~22시까지만 당일 예약",
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "현재 예약할 수 없는 시간입니다",
+              "description": "평일 9시~22시까지만 당일 예약",
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
             }
           }]
         }
@@ -735,13 +766,17 @@ async function reserve(reqBody, res, room_type) {
       await conn.rollback();
       console.log("[WARN] Wrong hours");
       return res.send({
-        "version":"2.0",
-        "template":{
-          "outputs":[{
-            "textCard":{
-              "title":"30분부터 최대4시간 신청 가능합니다",
-              "description":`요청시간: ${displayTime}`,
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "30분부터 최대4시간 신청 가능합니다",
+              "description": `요청시간: ${displayTime}`,
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
             }
           }]
         }
@@ -767,13 +802,17 @@ async function reserve(reqBody, res, room_type) {
       await conn.rollback();
       console.log("[WARN] Overlap->", room_type);
       return res.send({
-        "version":"2.0",
-        "template":{
-          "outputs":[{
-            "textCard":{
-              "title":"해당 일시에 겹치는 예약이 있습니다",
-              "description":`- 방:${room_type}\n- 시간:${displayTime}`,
-              "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+        "version": "2.0",
+        "template": {
+          "outputs": [{
+            "textCard": {
+              "title": "해당 일시에 겹치는 예약이 있습니다",
+              "description": `- 방:${room_type}\n- 시간:${displayTime}`,
+              "buttons": [{
+                "label": "처음으로",
+                "action": "block",
+                "messageText": "처음으로"
+              }]
             }
           }]
         }
@@ -800,13 +839,17 @@ async function reserve(reqBody, res, room_type) {
     console.log("[SUCCESS] Reserved->", reserve_code);
 
     return res.send({
-      "version":"2.0",
-      "template":{
-        "outputs":[{
-          "textCard":{
-            "title":"성공적으로 예약되었습니다",
-            "description":`- 방: ${room_type}\n- 예약번호: ${reserve_code}\n- 시간: ${displayTime}\n- 신청자: ${hiddenName}`,
-            "buttons":[{"label":"처음으로","action":"block","messageText":"처음으로"}]
+      "version": "2.0",
+      "template": {
+        "outputs": [{
+          "textCard": {
+            "title": "성공적으로 예약되었습니다",
+            "description": `- 방: ${room_type}\n- 예약번호: ${reserve_code}\n- 시간: ${displayTime}\n- 신청자: ${hiddenName}`,
+            "buttons": [{
+              "label": "처음으로",
+              "action": "block",
+              "messageText": "처음으로"
+            }]
           }
         }]
       }
@@ -814,11 +857,12 @@ async function reserve(reqBody, res, room_type) {
   } catch (err) {
     console.error("[ERROR] reserve:", err);
     if (conn) await conn.rollback();
-    return res.send({status:"FAIL", message:"예약 처리 중 오류"});
+    return res.send({ status: "FAIL", message: "예약 처리 중 오류" });
   } finally {
     if (conn) conn.release();
   }
 }
+
 
 /***********************************************
  * (B) 물품 예약 (충전기/HDMI/멀티탭 등)
