@@ -1257,7 +1257,18 @@ async function reserveCancel(reqBody, res) {
 async function reserveStartTimeCheck(reqBody, res) {
   console.log("[INFO] reserveStartTimeCheck 호출됨");
   try {
-    const st = reqBody.value.origin.slice(0, 5);
+    const timeStr = reqBody.value.origin; // 전체 입력 문자열
+    // 시간 형식 검사: 예) "11:00", "9:05" 형태인지 (숫자 + ':' + 2자리 숫자)
+    if (!/^\d{1,2}:\d{2}$/.test(timeStr)) {
+      console.log("[FAILED] 예약 시작 시간 형식 오류 ->", timeStr);
+      return res.send({
+        "status": "FAIL",
+        "message": "잘못된 시간 형식입니다. (예: 11:00)"
+      });
+    }
+    
+    // 올바른 형식일 경우, 시분을 추출하여 비교
+    const st = timeStr.slice(0, 5);
     const now = new Date();
     const curMin = now.getHours() * 60 + now.getMinutes();
     const [sh, sm] = st.split(":").map(Number);
@@ -1279,6 +1290,7 @@ async function reserveStartTimeCheck(reqBody, res) {
     res.send({ "status": "FAIL", "message": "잘못된 요청" });
   }
 }
+
 
 async function checkClientName(reqBody, res) {
   console.log("[INFO] checkClientName", reqBody.value.origin);
