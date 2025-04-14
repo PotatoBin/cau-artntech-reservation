@@ -1258,8 +1258,8 @@ async function reserveStartTimeCheck(reqBody, res) {
   console.log("[INFO] reserveStartTimeCheck 호출됨");
   try {
     const timeStr = reqBody.value.origin; // 전체 입력 문자열
-    // 시간 형식 검사: 예) "11:00", "9:05" 형태인지 (숫자 + ':' + 2자리 숫자)
-    if (!/^\d{1,2}:\d{2}$/.test(timeStr)) {
+    // 시간 형식 검사: 예) "11:00:00", "9:00:00" 형태인지 (숫자 + ':' + 2자리 숫자)
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(timeStr)) {
       console.log("[FAILED] 예약 시작 시간 형식 오류 ->", timeStr);
       return res.send({
         "status": "FAIL",
